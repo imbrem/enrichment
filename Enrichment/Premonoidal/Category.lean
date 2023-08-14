@@ -10,9 +10,14 @@ import Enrichment.Binoidal.Category
 open CategoryTheory
 open BinoidalCategory
 
-class PremonoidalCategory (C: Type u) [Category C] extends BinoidalCategory C :=
+
+class TensorMonoid (C: Type u) extends TensorProduct C :=
   /-- The tensor unity in the monoidal structure `𝟙_ C` -/
   tensorUnit' : C
+
+open TensorMonoid
+
+class PremonoidalCategory (C: Type u) [Category C] [TensorMonoid C] extends BinoidalCategory C :=
   /-- The associator isomorphism `(X ⊗ Y) ⊗ Z ≃ X ⊗ (Y ⊗ Z)` -/
   associator : ∀ X Y Z : C, tensorObj (tensorObj X Y) Z ≅ tensorObj X (tensorObj Y Z)
   /-- The left unitor: `𝟙_ C ⊗ X ≃ X` -/
@@ -95,14 +100,19 @@ class PremonoidalCategory (C: Type u) [Category C] extends BinoidalCategory C :=
         whiskerRight (rightUnitor X).hom Y := by
     aesop_cat
 
+abbrev TensorMonoid.tensorUnit (C : Type u) [Category C] [TensorMonoid C] : C :=
+  tensorUnit' (C := C)
+
+instance TensorMonoid.fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: TensorMonoid C := {
+  tensorUnit' := MonoidalCategory.tensorUnit'
+}
+
 namespace PremonoidalCategory
 
-abbrev tensorUnit (C : Type u) [Category.{v} C] [PremonoidalCategory C] : C :=
-  tensorUnit' (C := C)
+export TensorMonoid (tensorUnit tensorUnit')
 
 instance fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: PremonoidalCategory C := {
   toBinoidalCategory := BinoidalCategory.fromMonoidalCategory C
-  tensorUnit' := MonoidalCategory.tensorUnit'
   associator := MonoidalCategory.associator
   leftUnitor := MonoidalCategory.leftUnitor
   rightUnitor := MonoidalCategory.rightUnitor
@@ -111,7 +121,7 @@ instance fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: Pre
     simp [
       BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight, 
       <-MonoidalCategory.tensorHom_id,
-      BinoidalCategory.tensorObj
+      TensorProduct.tensorObj
     ]
   associator_mid_naturality := by
     simp [
@@ -125,7 +135,7 @@ instance fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: Pre
       <-MonoidalCategory.id_tensorHom,
       <-MonoidalCategory.tensor_id,
       MonoidalCategory.associator_naturality,
-      BinoidalCategory.tensorObj
+      TensorProduct.tensorObj
     ]
   leftUnitor_centrality := λ_ => monoidalCentralIso _
   leftUnitor_naturality := by
@@ -142,14 +152,14 @@ instance fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: Pre
   pentagon := by
     simp [
       BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight, 
-      BinoidalCategory.tensorObj,
+      TensorProduct.tensorObj,
       associator, <-MonoidalCategory.tensorHom_id, <-MonoidalCategory.id_tensorHom,
       MonoidalCategory.pentagon
     ]
   triangle := by
     simp [
       BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight, 
-      BinoidalCategory.tensorObj,
+      TensorProduct.tensorObj, TensorMonoid.tensorUnit',
       associator, <-MonoidalCategory.tensorHom_id, <-MonoidalCategory.id_tensorHom
     ]
 }

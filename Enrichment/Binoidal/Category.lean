@@ -7,9 +7,13 @@ import Mathlib.Order.Monotone.Basic
 open CategoryTheory
 open Quiver
 
-class BinoidalCategory (C: Type u) [Category C] :=
+class TensorProduct (C: Type u) :=
   /-- curried tensor product of objects -/
   tensorObj: C -> C -> C
+
+open TensorProduct
+
+class BinoidalCategory (C: Type u) [Category C] [TensorProduct C] :=
   /-- left whiskering for morphisms -/
   whiskerLeft: (X: C) -> {Y₁ Y₂: C} -> (Y₁ ⟶ Y₂) -> (tensorObj X Y₁ ⟶ tensorObj X Y₂)
   whiskerLeft_id : ∀ (X Y : C), whiskerLeft X (𝟙 Y) = 𝟙 (tensorObj X Y) := by
@@ -41,6 +45,8 @@ class BinoidalCategory (C: Type u) [Category C] :=
 
 namespace BinoidalCategory
 
+export TensorProduct (tensorObj)
+
 /-- Notation for `tensorObj`, the tensor product of objects in a binoidal category -/
 scoped infixr:70 " ⊗ " => tensorObj
 
@@ -56,26 +62,29 @@ scoped infixr:81 " ⋉ " => leftTensorHom
 /-- Notation for the `rightTensorHom` operator of binoidal categories -/
 scoped infixl:81 " ⋊ " => rightTensorHom
 
-instance fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: BinoidalCategory C := {
+instance TensorProduct.fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: TensorProduct C := {
   tensorObj := MonoidalCategory.tensorObj
+}
+
+instance fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: BinoidalCategory C := {
   whiskerLeft := MonoidalCategory.whiskerLeft
   whiskerRight := MonoidalCategory.whiskerRight
   whiskerLeft_comp := by simp [<-MonoidalCategory.id_tensorHom]
   whiskerRight_comp := by simp [<-MonoidalCategory.tensorHom_id]
 }
 
-abbrev Commute {C} [Category C] [BinoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
+abbrev Commute {C} [Category C] [TensorProduct C] [BinoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
   := f ⋉ g = f ⋊ g
 
 def monoidalCommute {C} [Category C] [MonoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
   : Commute f g
   := by simp [Commute, leftTensorHom, rightTensorHom, MonoidalCategory.whisker_exchange]
 
-class Central {C} [Category C] [BinoidalCategory C] {X Y: C} (f: X ⟶ Y) :=
+class Central {C} [Category C] [TensorProduct C] [BinoidalCategory C] {X Y: C} (f: X ⟶ Y) :=
   commute_left: ∀{Z W}, ∀g: Z ⟶ W, Commute f g
   commute_right: ∀{Z W}, ∀g: Z ⟶ W, Commute g f
 
-class CentralIso {C} [Category C] [BinoidalCategory C] {X Y: C} (f: X ≅ Y) :=
+class CentralIso {C} [Category C] [TensorProduct C] [BinoidalCategory C] {X Y: C} (f: X ≅ Y) :=
   hom: Central f.hom
   inv: Central f.inv
 

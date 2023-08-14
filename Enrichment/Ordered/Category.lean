@@ -20,7 +20,7 @@ class OrderedCategory (C: Type u) [Category C] extends OrderedQuiver C :=
 
 set_option checkBinderAnnotations false
 
-class OrderedBinoidalCategory (C: Type u) [Category C] [BinoidalCategory C] extends OrderedCategory C :=
+class OrderedBinoidalCategory (C: Type u) [Category C] [TensorProduct C] [BinoidalCategory C] extends OrderedCategory C :=
   congr_whiskerLeft {Z X Y: C}
     : @Monotone (Hom X Y) _ hom_ord.toPreorder hom_ord.toPreorder (BinoidalCategory.whiskerLeft Z)
   congr_whiskerRight {Z X Y: C}
