@@ -95,5 +95,61 @@ class PremonoidalCategory (C: Type u) [Category C] extends BinoidalCategory C :=
         whiskerRight (rightUnitor X).hom Y := by
     aesop_cat
 
-abbrev PremonoidalCategory.tensorUnit (C : Type u) [Category.{v} C] [PremonoidalCategory C] : C :=
+namespace PremonoidalCategory
+
+abbrev tensorUnit (C : Type u) [Category.{v} C] [PremonoidalCategory C] : C :=
   tensorUnit' (C := C)
+
+instance fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: PremonoidalCategory C := {
+  toBinoidalCategory := BinoidalCategory.fromMonoidalCategory C
+  tensorUnit' := MonoidalCategory.tensorUnit'
+  associator := MonoidalCategory.associator
+  leftUnitor := MonoidalCategory.leftUnitor
+  rightUnitor := MonoidalCategory.rightUnitor
+  associator_centrality := λ_ _ _ => monoidalCentralIso _
+  associator_left_naturality := by 
+    simp [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight, 
+      <-MonoidalCategory.tensorHom_id,
+      BinoidalCategory.tensorObj
+    ]
+  associator_mid_naturality := by
+    simp [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight, 
+      <-MonoidalCategory.tensorHom_id, <-MonoidalCategory.id_tensorHom
+    ]
+  associator_right_naturality := by
+    intros
+    simp only [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight, 
+      <-MonoidalCategory.id_tensorHom,
+      <-MonoidalCategory.tensor_id,
+      MonoidalCategory.associator_naturality,
+      BinoidalCategory.tensorObj
+    ]
+  leftUnitor_centrality := λ_ => monoidalCentralIso _
+  leftUnitor_naturality := by
+    simp [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight, 
+      tensorUnit', <-MonoidalCategory.id_tensorHom
+    ]
+  rightUnitor_centrality := λ_ => monoidalCentralIso _
+  rightUnitor_naturality := by
+    simp [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight, 
+      tensorUnit', <-MonoidalCategory.tensorHom_id
+    ]
+  pentagon := by
+    simp [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight, 
+      BinoidalCategory.tensorObj,
+      associator, <-MonoidalCategory.tensorHom_id, <-MonoidalCategory.id_tensorHom,
+      MonoidalCategory.pentagon
+    ]
+  triangle := by
+    simp [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight, 
+      BinoidalCategory.tensorObj,
+      associator, <-MonoidalCategory.tensorHom_id, <-MonoidalCategory.id_tensorHom
+    ]
+}
