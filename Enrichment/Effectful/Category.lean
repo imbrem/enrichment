@@ -19,6 +19,7 @@ instance valueTensorProduct {C: Type u} [T: TensorProduct C]: TensorProduct (Val
 instance valueTensorMonoid {C: Type u} [T: TensorMonoid C]: TensorMonoid (Value C) := T
 
 def Value.inclusion {C: Type u} (A: Value C): C := A
+def Value.box {C: Type u} (A: C): Value C := A
 def Value.inclusion_def {C: Type u} (A: Value C): inclusion A = A := rfl
 
 class EffectfulCategory (C: Type u) 
