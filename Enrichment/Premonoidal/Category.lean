@@ -19,10 +19,6 @@ class PremonoidalCategory (C: Type u) [Category C] extends BinoidalCategory C :=
   leftUnitor : ∀ X : C, tensorObj tensorUnit' X ≅ X
   /-- The right unitor: `X ⊗ 𝟙_ C ≃ X` -/
   rightUnitor : ∀ X : C, tensorObj X tensorUnit' ≅ X
-  whiskerLeft_id : ∀ (X Y : C), whiskerLeft X (𝟙 Y) = 𝟙 (tensorObj X Y) := by
-    aesop_cat
-  id_whiskerRight : ∀ (X Y : C), whiskerRight (𝟙 X) Y = 𝟙 (tensorObj X Y) := by
-    aesop_cat
   /--
   Centrality of the associator
   -/

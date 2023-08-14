@@ -12,8 +12,18 @@ class BinoidalCategory (C: Type u) [Category C] :=
   tensorObj: C -> C -> C
   /-- left whiskering for morphisms -/
   whiskerLeft: (X: C) -> {Y₁ Y₂: C} -> (Y₁ ⟶ Y₂) -> (tensorObj X Y₁ ⟶ tensorObj X Y₂)
+  whiskerLeft_id : ∀ (X Y : C), whiskerLeft X (𝟙 Y) = 𝟙 (tensorObj X Y) := by
+    aesop_cat
+  whiskerLeft_comp {X Y₁ Y₂: C} (f: Y₁ ⟶ Y₂) {Y₃: C} (g: Y₂ ⟶ Y₃)
+    : whiskerLeft X (f ≫ g) = whiskerLeft X f ≫ whiskerLeft X g
+
   /-- right whiskering for morphisms -/
   whiskerRight: {X₁ X₂: C} -> (X₁ ⟶ X₂) -> (Y: C) -> (tensorObj X₁ Y ⟶ tensorObj X₂ Y)
+  id_whiskerRight : ∀ (X Y : C), whiskerRight (𝟙 X) Y = 𝟙 (tensorObj X Y) := by
+    aesop_cat
+  whiskerRight_comp {X Y₁ Y₂: C} (f: Y₁ ⟶ Y₂) {Y₃: C} (g: Y₂ ⟶ Y₃)
+    : whiskerRight (f ≫ g) X = whiskerRight f X ≫ whiskerRight g X
+
   /-- left tensor product `f ⋉ g` -/
   leftTensorHom {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) : (tensorObj X₁ X₂ ⟶ tensorObj Y₁ Y₂) :=
     whiskerRight f _ ≫ whiskerLeft _ g
@@ -46,14 +56,37 @@ scoped infixr:81 " ⋉ " => leftTensorHom
 /-- Notation for the `rightTensorHom` operator of binoidal categories -/
 scoped infixl:81 " ⋊ " => rightTensorHom
 
-def OrdCommute {C} [Category C] [BinoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
+instance fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: BinoidalCategory C := {
+  tensorObj := MonoidalCategory.tensorObj
+  whiskerLeft := MonoidalCategory.whiskerLeft
+  whiskerRight := MonoidalCategory.whiskerRight
+  whiskerLeft_comp := by simp [<-MonoidalCategory.id_tensorHom]
+  whiskerRight_comp := by simp [<-MonoidalCategory.tensorHom_id]
+}
+
+abbrev Commute {C} [Category C] [BinoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
   := f ⋉ g = f ⋊ g
 
-def Commute {C} [Category C] [BinoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
-  := OrdCommute f g ∧ OrdCommute g f 
+def monoidalCommute {C} [Category C] [MonoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
+  : Commute f g
+  := by simp [Commute, leftTensorHom, rightTensorHom, MonoidalCategory.whisker_exchange]
 
-def Central {C} [Category C] [BinoidalCategory C] {X Y: C} (f: X ⟶ Y)
-  := ∀{Z W}, ∀g: Z ⟶ W, Commute f g
+class Central {C} [Category C] [BinoidalCategory C] {X Y: C} (f: X ⟶ Y) :=
+  commute_left: ∀{Z W}, ∀g: Z ⟶ W, Commute f g
+  commute_right: ∀{Z W}, ∀g: Z ⟶ W, Commute g f
 
-def CentralIso {C} [Category C] [BinoidalCategory C] {X Y: C} (f: X ≅ Y)
-  := Central f.hom ∧ Central f.inv
+class CentralIso {C} [Category C] [BinoidalCategory C] {X Y: C} (f: X ≅ Y) :=
+  hom: Central f.hom
+  inv: Central f.inv
+
+instance monoidalCentral {C: Type u} [Category C] [MonoidalCategory C] {X Y: C} (f: X ⟶ Y)
+: Central f := {
+  commute_left := λg => monoidalCommute f g
+  commute_right := λg => monoidalCommute g f
+}
+
+instance monoidalCentralIso {C: Type u} [Category C] [MonoidalCategory C] {X Y: C} (f: X ≅ Y)
+: CentralIso f := {
+  hom := monoidalCentral f.hom
+  inv := monoidalCentral f.inv
+}
