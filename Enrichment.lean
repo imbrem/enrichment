@@ -4,4 +4,5 @@ import Enrichment.Premonoidal.Category
 import Enrichment.Premonoidal.Braided
 import Enrichment.Premonoidal.Monoidal'
 import Enrichment.Effectful.Category
+import Enrichment.Effectful.Braided
 import Enrichment.Runtime.Diagram
