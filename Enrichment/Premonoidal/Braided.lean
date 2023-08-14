@@ -27,3 +27,46 @@ where
 class SymmetricPremonoidalCategory (C: Type u) [Category C] [TensorMonoid C] [PremonoidalCategory C] 
 extends BraidedPremonoidalCategory C where
   symmetry : ∀ X Y : C, (braiding X Y).hom ≫ (braiding Y X).hom = 𝟙 (X ⊗ Y)
+
+namespace BraidedPremonoidalCategory
+
+instance fromBraidedCategory {C: Type u} [Category C] [MonoidalCategory C] [BraidedCategory C]
+: BraidedPremonoidalCategory C
+where
+  braiding := BraidedCategory.braiding
+  braiding_left_naturality := by
+    simp [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight,
+      <-MonoidalCategory.tensorHom_id, <-MonoidalCategory.id_tensorHom
+    ]
+  braiding_right_naturality := by
+    simp [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight,
+      <-MonoidalCategory.tensorHom_id, <-MonoidalCategory.id_tensorHom
+    ]
+  hexagon_forward := by
+    simp [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight,
+      TensorProduct.tensorObj,
+      braiding, associator, BraidedCategory.hexagon_forward,
+      <-MonoidalCategory.tensorHom_id, <-MonoidalCategory.id_tensorHom
+    ]
+  hexagon_reverse := by
+    simp [
+      BinoidalCategory.whiskerLeft, BinoidalCategory.whiskerRight,
+      TensorProduct.tensorObj,
+      braiding, associator, BraidedCategory.hexagon_reverse,
+      <-MonoidalCategory.tensorHom_id, <-MonoidalCategory.id_tensorHom
+    ]
+
+end BraidedPremonoidalCategory
+
+namespace SymmetricPremonoidalCategory
+
+instance fromSymmetricCategory {C: Type u} [Category C] [MonoidalCategory C] [SymmetricCategory C]
+: SymmetricPremonoidalCategory C
+where
+  toBraidedPremonoidalCategory := BraidedPremonoidalCategory.fromBraidedCategory
+  symmetry := SymmetricCategory.symmetry
+  
+end SymmetricPremonoidalCategory
