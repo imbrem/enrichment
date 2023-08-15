@@ -59,7 +59,7 @@ inductive Diagram.inverses {C: Type u}
 | braiding (X Y): inverses (braiding X Y) (braiding Y X)
 | symm {X Y} {f: Diagram X Y} {g: Diagram Y X}: inverses f g -> inverses g f
 
-inductive Diagram.slides {C: Type u}
+inductive Diagram.isotopy {C: Type u}
   [TensorMonoid C]
   [Category (Value C)]
   [Category C]
@@ -69,85 +69,107 @@ inductive Diagram.slides {C: Type u}
   [PremonoidalCategory C]
   [ℰ: EffectfulCategory C]
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
-| identity_left {X Y} (f: Diagram X Y): slides (comp f (identity Y)) f
-| identity_right {X Y} (f: Diagram X Y): slides (comp (identity X) f) f
+| identity_left {X Y} (f: Diagram X Y): isotopy (comp f (identity Y)) f
+| identity_right {X Y} (f: Diagram X Y): isotopy (comp (identity X) f) f
 | comp_assoc {X Y Z W} {f: Diagram X Y} {g: Diagram Y Z} {h: Diagram Z W}
-  : slides (comp f (comp g h)) (comp (comp f g) h)
+  : isotopy (comp f (comp g h)) (comp (comp f g) h)
 | inv_comp {X Y} {f: Diagram X Y} {g: Diagram Y X}
-  : inverses f g -> slides (comp f g) (identity X)
+  : inverses f g -> isotopy (comp f g) (identity X)
 | whiskerLeft_identity (X Y)
-  : slides (whiskerLeft X (identity Y)) (identity (X ⊗ Y))
+  : isotopy (whiskerLeft X (identity Y)) (identity (X ⊗ Y))
 | whiskerRight_identity (X Y)
-  : slides (whiskerRight (identity X) Y) (identity (X ⊗ Y))
+  : isotopy (whiskerRight (identity X) Y) (identity (X ⊗ Y))
 | sliding {X₁ Y₁ X₂ Y₂} (f: Diagram X₁ Y₁) (g: Diagram X₂ Y₂)
-  : slides 
+  : isotopy 
     (comp (whiskerRight f X₂) (whiskerLeft Y₁ g)) 
     (comp (whiskerLeft X₁ g) (whiskerRight f Y₂))
 | associator_left {X Y Z X'} (f: Diagram X X')
-  : slides
+  : isotopy
     (comp (whiskerRight (whiskerRight f Y) Z) (associator X' Y Z))
     (comp (associator X Y Z) (whiskerRight f (Y ⊗ Z)))
 | associator_mid {X Y Z Y'} (f: Diagram Y Y')
-  : slides
+  : isotopy
     (comp (whiskerRight (whiskerLeft X f) Z) (associator X Y' Z))
     (comp (associator X Y Z) (whiskerLeft X (whiskerRight f Z)))
 | associator_right {X Y Z Z'} (f: Diagram Z Z')
-  : slides
+  : isotopy
     (comp (whiskerLeft (X ⊗ Y) f) (associator X Y Z'))
     (comp (associator X Y Z) (whiskerLeft X (whiskerLeft Y f)))
 | leftUnitor {X Y} (f: Diagram X Y)
-  : slides
+  : isotopy
     (comp (leftUnitor X) f)
     (comp (whiskerLeft tensorUnit' f) (leftUnitor Y))
 | rightUnitor {X Y} (f: Diagram X Y)
-  : slides
+  : isotopy
     (comp (rightUnitor X) f)
     (comp (whiskerRight f tensorUnit') (rightUnitor Y))
 | braiding_left {X Y Z} (f: Diagram X Y)
-  : slides
+  : isotopy
     (comp (whiskerLeft Z f) (braiding Z Y))
     (comp (braiding Z X) (whiskerRight f Z))
 | braiding_right {X Y Z} (f: Diagram X Y)
-  : slides
+  : isotopy
     (comp (whiskerRight f Z) (braiding Y Z))
     (comp (braiding X Z) (whiskerLeft Z f))
 | triangle (X Y)
-  : slides
+  : isotopy
     (comp (associator X tensorUnit' Y) (whiskerLeft X (leftUnitor Y)))
     (whiskerRight (rightUnitor X) Y)
 | pentagon (X Y Z W)
-  : slides
+  : isotopy
     (comp (associator (X ⊗ Y) Z W) (associator X Y (Z ⊗ W)))
     (comp (whiskerRight (associator X Y Z) W) 
       (comp (associator X (Y ⊗ Z) W) (whiskerLeft X (associator Y Z W))))
 | hexagon (X Y Z)
-  : slides
+  : isotopy
     (comp (associator X Y Z) (comp (braiding X (Y ⊗ Z)) (associator Y Z X)))
     (comp (whiskerRight (braiding X Y) Z) (comp (associator Y X Z) (whiskerLeft Y (braiding X Z))))
-| hoop: slides (comp split join) (identity state')
-| pure_identity (X): slides (pure (𝟙 X)) (identity _)
+| hoop: isotopy (comp split join) (identity state')
+| pure_identity (X): isotopy (pure (𝟙 X)) (identity _)
 | pure_composes {X Y Z: C} (f: Value.box X ⟶ Value.box Y) (g: Value.box Y ⟶ Value.box Z)
-  : slides (comp (pure f) (pure g)) (pure (f ≫ g))
+  : isotopy (comp (pure f) (pure g)) (pure (f ≫ g))
 | pure_left {X Y Z: C} (f: Value.box X ⟶ Value.box Y)
-  : slides (whiskerLeft ⟨Z, 0⟩ (pure f)) (pure (𝒱.whiskerLeft Z f))
+  : isotopy (whiskerLeft ⟨Z, 0⟩ (pure f)) (pure (𝒱.whiskerLeft Z f))
 | pure_right {X Y Z: C} (f: Value.box X ⟶ Value.box Y)
-  : slides (whiskerRight (pure f) ⟨Z, 0⟩) (pure (𝒱.whiskerRight f Z))
+  : isotopy (whiskerRight (pure f) ⟨Z, 0⟩) (pure (𝒱.whiskerRight f Z))
 | pure_associator (X Y Z: C)
-  : slides (@pure C _ _ _ _ _ (𝒱.associator X Y Z).hom) (associator ⟨X, 0⟩ ⟨Y, 0⟩ ⟨Z, 0⟩)
+  : isotopy (@pure C _ _ _ _ _ (𝒱.associator X Y Z).hom) (associator ⟨X, 0⟩ ⟨Y, 0⟩ ⟨Z, 0⟩)
 | pure_leftUnitor (X: C)
-  : slides (@pure C _ _ _ _ _ (𝒱.leftUnitor X).hom) (leftUnitor ⟨X, 0⟩)
+  : isotopy (@pure C _ _ _ _ _ (𝒱.leftUnitor X).hom) (leftUnitor ⟨X, 0⟩)
 | pure_rightUnitor (X: C)
-  : slides (@pure C _ _ _ _ _ (𝒱.rightUnitor X).hom) (rightUnitor ⟨X, 0⟩)
+  : isotopy (@pure C _ _ _ _ _ (𝒱.rightUnitor X).hom) (rightUnitor ⟨X, 0⟩)
 | pure_braiding (X Y: C)
-  : slides (@pure C _ _ _ _ _ (𝒮.braiding X Y).hom) (braiding ⟨X, 0⟩ ⟨Y, 0⟩)
+  : isotopy (@pure C _ _ _ _ _ (𝒮.braiding X Y).hom) (braiding ⟨X, 0⟩ ⟨Y, 0⟩)
 | inclusion_pure_left {X Y Z: C} (f: X ⟶ Y) (g: Value.box Y ⟶ Value.box Z)
-  : slides 
+  : isotopy 
     (effectful (f ≫ ℰ.inclusion.map' g))
     (comp (effectful f) (whiskerRight (pure g) state'))
 | inclusion_pure_right {X Y Z: C} (f: Value.box X ⟶ Value.box Y) (g: Y ⟶ Z)
-  : slides 
+  : isotopy 
     (effectful (ℰ.inclusion.map' f ≫ g))
     (comp (whiskerRight (pure f) state') (effectful g))
+
+inductive Diagram.isotopic {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [EffectfulCategory C]
+  : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
+| isotopy {D E: Diagram X Y}: D.isotopy E -> D.isotopic E
+| isotopy_inv {D E: Diagram X Y}: E.isotopy D -> D.isotopic E
+| congr_comp {D D': Diagram X Y} {E E': Diagram Y Z}:
+  D.isotopic D' -> E.isotopic E' -> (comp D E).isotopic (comp D' E')
+| congr_whiskerLeft {D D': Diagram X Y} (Z):
+  D.isotopic D' -> (whiskerLeft Z D).isotopic (whiskerLeft Z D')
+| congr_whiskerRight {D D': Diagram X Y}:
+  D.isotopic D' -> (Z: DiagramPort C) -> (whiskerRight D Z).isotopic (whiskerRight D' Z)
+| refl (D: Diagram X Y): D.isotopic D
+| trans (D E F: Diagram X Y): D.isotopic E -> E.isotopic F -> D.isotopic F
+
 
 -- inductive DiagramPort (C: Type u)
 -- | state
@@ -203,77 +225,77 @@ inductive Diagram.slides {C: Type u}
 -- | merge (X Y): inverses (merge X Y) (merge_inv X Y)
 -- | symm {X Y} {f: Diagram X Y} {g: Diagram Y X}: inverses f g -> inverses g f
 
--- inductive Diagram.slides {C: Type u}
+-- inductive Diagram.isotopy {C: Type u}
 --   [TensorMonoid C]
 --   [Category (Value C)]
 --   [Category C]
 --   [𝒱: PremonoidalCategory (Value C)]
 --   [PremonoidalCategory C]
 --   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
--- | identity_left {X Y} (f: Diagram X Y): slides (comp f (identity Y)) f
--- | identity_right {X Y} (f: Diagram X Y): slides (comp (identity X) f) f
+-- | identity_left {X Y} (f: Diagram X Y): isotopy (comp f (identity Y)) f
+-- | identity_right {X Y} (f: Diagram X Y): isotopy (comp (identity X) f) f
 -- | comp_assoc {X Y Z W} {f: Diagram X Y} {g: Diagram Y Z} {h: Diagram Z W}
---   : slides (comp f (comp g h)) (comp (comp f g) h)
+--   : isotopy (comp f (comp g h)) (comp (comp f g) h)
 -- | inv_comp {X Y} {f: Diagram X Y} {g: Diagram Y X}
---   : inverses f g -> slides (comp f g) (identity X)
+--   : inverses f g -> isotopy (comp f g) (identity X)
 -- | whiskerLeft_identity (X Y)
---   : slides (whiskerLeft X (identity Y)) (identity (X ⊗ Y))
+--   : isotopy (whiskerLeft X (identity Y)) (identity (X ⊗ Y))
 -- | whiskerRight_identity (X Y)
---   : slides (whiskerRight (identity X) Y) (identity (X ⊗ Y))
+--   : isotopy (whiskerRight (identity X) Y) (identity (X ⊗ Y))
 -- | sliding {X₁ Y₁ X₂ Y₂} (f: Diagram X₁ Y₁) (g: Diagram X₂ Y₂)
---   : slides 
+--   : isotopy 
 --     (comp (whiskerRight f X₂) (whiskerLeft Y₁ g)) 
 --     (comp (whiskerLeft X₁ g) (whiskerRight f Y₂))
 -- | associator_left {X Y Z X'} (f: Diagram X X')
---   : slides
+--   : isotopy
 --     (comp (whiskerRight (whiskerRight f Y) Z) (associator X' Y Z))
 --     (comp (associator X Y Z) (whiskerRight f (Y ⊗ Z)))
 -- | associator_mid {X Y Z Y'} (f: Diagram Y Y')
---   : slides
+--   : isotopy
 --     (comp (whiskerRight (whiskerLeft X f) Z) (associator X Y' Z))
 --     (comp (associator X Y Z) (whiskerLeft X (whiskerRight f Z)))
 -- | associator_right {X Y Z Z'} (f: Diagram Z Z')
---   : slides
+--   : isotopy
 --     (comp (whiskerLeft (X ⊗ Y) f) (associator X Y Z'))
 --     (comp (associator X Y Z) (whiskerLeft X (whiskerLeft Y f)))
 -- | leftUnitor {X Y} (f: Diagram X Y)
---   : slides
+--   : isotopy
 --     (comp (leftUnitor X) f)
 --     (comp (whiskerLeft tensorUnit' f) (leftUnitor Y))
 -- | rightUnitor {X Y} (f: Diagram X Y)
---   : slides
+--   : isotopy
 --     (comp (rightUnitor X) f)
 --     (comp (whiskerRight f tensorUnit') (rightUnitor Y))
 -- | braiding_left {X Y Z} (f: Diagram X Y)
---   : slides
+--   : isotopy
 --     (comp (whiskerLeft Z f) (braiding Z Y))
 --     (comp (braiding Z X) (whiskerRight f Z))
 -- | braiding_right {X Y Z} (f: Diagram X Y)
---   : slides
+--   : isotopy
 --     (comp (whiskerRight f Z) (braiding Y Z))
 --     (comp (braiding X Z) (whiskerLeft Z f))
 -- | merge_left {X Y Z: C} (f: Value.box X ⟶ Value.box Y)
---   : slides
+--   : isotopy
 --     (comp (merge Z X) (pure (𝒱.whiskerLeft Z f)))
 --     (comp (whiskerLeft _ (pure f)) (merge Z Y))
 -- | merge_right {X Y Z: C} (f: Value.box X ⟶ Value.box Y)
---   : slides
+--   : isotopy
 --     (comp (merge X Z) (pure (𝒱.whiskerRight f Z)))
 --     (comp (whiskerRight (pure f) _) (merge Y Z))
 -- | triangle (X Y)
---   : slides
+--   : isotopy
 --     (comp (associator X tensorUnit' Y) (whiskerLeft X (leftUnitor Y)))
 --     (whiskerRight (rightUnitor X) Y)
 -- | pentagon (X Y Z W)
---   : slides
+--   : isotopy
 --     (comp (associator (X ⊗ Y) Z W) (associator X Y (Z ⊗ W)))
 --     (comp (whiskerRight (associator X Y Z) W) 
 --       (comp (associator X (Y ⊗ Z) W) (whiskerLeft X (associator Y Z W))))
 -- | hexagon (X Y Z)
---   : slides
+--   : isotopy
 --     (comp (associator X Y Z) (comp (braiding X (Y ⊗ Z)) (associator Y Z X)))
 --     (comp (whiskerRight (braiding X Y) Z) (comp (associator Y X Z) (whiskerLeft Y (braiding X Z))))
--- | hoop: slides (comp split join) (identity state)
+-- | hoop: isotopy (comp split join) (identity state)
 -- -- ...
 
 -- inductive Diagram.redex {C: Type u}
