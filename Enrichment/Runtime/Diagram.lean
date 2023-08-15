@@ -7,6 +7,7 @@ import Mathlib.Order.Monotone.Basic
 import Enrichment.Binoidal.Category
 import Enrichment.Premonoidal.Category
 import Enrichment.Effectful.Braided
+import Enrichment.Ordered.Category
 
 open CategoryTheory
 open BinoidalCategory
@@ -140,11 +141,14 @@ inductive Diagram.isotopy {C: Type u}
   : isotopy (@pure C _ _ _ _ _ (𝒱.rightUnitor X).hom) (rightUnitor ⟨X, 0⟩)
 | pure_braiding (X Y: C)
   : isotopy (@pure C _ _ _ _ _ (𝒮.braiding X Y).hom) (braiding ⟨X, 0⟩ ⟨Y, 0⟩)
-| inclusion_pure_left {X Y Z: C} (f: X ⟶ Y) (g: Value.box Y ⟶ Value.box Z)
+| effectful_identity (X: C)
+  : isotopy (effectful (𝟙 X)) (identity ⟨X ⊗ tensorUnit', 1⟩)
+--TODO: effectful whiskering?
+| effectful_inclusion_left {X Y Z: C} (f: X ⟶ Y) (g: Value.box Y ⟶ Value.box Z)
   : isotopy 
     (effectful (f ≫ ℰ.inclusion.map' g))
     (comp (effectful f) (whiskerRight (pure g) state'))
-| inclusion_pure_right {X Y Z: C} (f: Value.box X ⟶ Value.box Y) (g: Y ⟶ Z)
+| effectful_inclusion_right {X Y Z: C} (f: Value.box X ⟶ Value.box Y) (g: Y ⟶ Z)
   : isotopy 
     (effectful (ℰ.inclusion.map' f ≫ g))
     (comp (whiskerRight (pure f) state') (effectful g))
@@ -161,15 +165,42 @@ inductive Diagram.isotopic {C: Type u}
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
 | isotopy {D E: Diagram X Y}: D.isotopy E -> D.isotopic E
 | isotopy_inv {D E: Diagram X Y}: E.isotopy D -> D.isotopic E
-| congr_comp {D D': Diagram X Y} {E E': Diagram Y Z}:
-  D.isotopic D' -> E.isotopic E' -> (comp D E).isotopic (comp D' E')
-| congr_whiskerLeft {D D': Diagram X Y} (Z):
-  D.isotopic D' -> (whiskerLeft Z D).isotopic (whiskerLeft Z D')
-| congr_whiskerRight {D D': Diagram X Y}:
-  D.isotopic D' -> (Z: DiagramPort C) -> (whiskerRight D Z).isotopic (whiskerRight D' Z)
+| congr_comp {D D': Diagram X Y} {E E': Diagram Y Z}
+  : D.isotopic D' -> E.isotopic E' -> (comp D E).isotopic (comp D' E')
+| congr_whiskerLeft {D D': Diagram X Y} (Z)
+  : D.isotopic D' -> (whiskerLeft Z D).isotopic (whiskerLeft Z D')
+| congr_whiskerRight {D D': Diagram X Y}
+  : D.isotopic D' -> (Z: DiagramPort C) -> (whiskerRight D Z).isotopic (whiskerRight D' Z)
 | refl (D: Diagram X Y): D.isotopic D
 | trans (D E F: Diagram X Y): D.isotopic E -> E.isotopic F -> D.isotopic F
 
+
+inductive Diagram.homotopic {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [EffectfulCategory C]
+  [𝒱: OrderedCategory (Value C)]
+  [𝒞: OrderedCategory C]
+  : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
+| isotopy {D E: Diagram X Y}: D.isotopy E -> D.homotopic E
+| isotopy_inv {D E: Diagram X Y}: E.isotopy D -> D.homotopic E
+| congr_pure {X Y: C} (f g: Value.box X ⟶ Value.box Y)
+  : 𝒱.hom_ord.le f g -> (pure f).homotopic (pure g)
+| congr_effectful {X Y: C} (f g: X ⟶ Y)
+  : 𝒞.hom_ord.le f g -> (effectful f).homotopic (effectful g)
+| congr_comp {D D': Diagram X Y} {E E': Diagram Y Z}
+  : D.homotopic D' -> E.homotopic E' -> (comp D E).homotopic (comp D' E')
+| congr_whiskerLeft {D D': Diagram X Y} (Z)
+  : D.homotopic D' -> (whiskerLeft Z D).homotopic (whiskerLeft Z D')
+| congr_whiskerRight {D D': Diagram X Y}
+  : D.homotopic D' -> (Z: DiagramPort C) -> (whiskerRight D Z).homotopic (whiskerRight D' Z)
+| refl (D: Diagram X Y): D.homotopic D
+| trans (D E F: Diagram X Y): D.homotopic E -> E.homotopic F -> D.homotopic F
 
 -- inductive DiagramPort (C: Type u)
 -- | state
