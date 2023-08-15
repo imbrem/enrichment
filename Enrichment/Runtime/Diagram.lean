@@ -49,6 +49,28 @@ inductive Diagram {C: Type u}
 | pure {X Y: C}: (Value.box X ⟶ Value.box Y) -> Diagram ⟨X, 0⟩ ⟨Y, 0⟩
 | effectful {X Y: C}: (X ⟶ Y) -> Diagram ⟨tensorUnit' ⊗ X, 1⟩ ⟨tensorUnit' ⊗ Y, 1⟩
 
+def Diagram.pure_separate
+  {C: Type u}
+  [TensorMonoid C]
+  [Quiver.{v} (Value C)]
+  [Quiver.{v} C]
+  {X Y: DiagramPort C}
+  : Diagram X Y -> (X.states = 0 ↔ Y.states = 0)
+  | identity _ => by rfl
+  | comp f g => by rw [f.pure_separate, g.pure_separate]
+  | whiskerLeft ⟨_, n⟩ f => by
+    cases X; cases Y; cases n <;> simp_arith [tensorObj, f.pure_separate]
+  | whiskerRight f ⟨_, n⟩ => by
+    cases X; cases Y; cases n <;> simp_arith [tensorObj, f.pure_separate]
+  | associator ⟨_, _⟩ ⟨_, _⟩ ⟨_, _⟩ => by simp [tensorObj, Nat.add_assoc]
+  | associator_inv ⟨_, _⟩ ⟨_, _⟩ ⟨_, _⟩ => by simp [tensorObj, Nat.add_assoc]
+  | leftUnitor ⟨_, _⟩ 
+  | leftUnitor_inv ⟨_, _⟩
+  | rightUnitor ⟨_, _⟩
+  | rightUnitor_inv ⟨_, _⟩ => by simp [tensorObj]
+  | braiding ⟨_, _⟩ ⟨_, _⟩ => by simp [tensorObj, Nat.add_comm]
+  | split | join | pure _ | effectful _ => by simp
+
 inductive Diagram.inverses {C: Type u}
   [TensorMonoid C]
   [Quiver.{v} (Value C)]
