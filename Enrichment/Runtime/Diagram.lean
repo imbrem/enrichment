@@ -25,6 +25,16 @@ open DiagramPort
 instance {C: Type u} [TensorProduct C]: TensorProduct (DiagramPort C) where
   tensorObj := λ⟨X, n⟩ ⟨Y, m⟩ => ⟨X ⊗ Y, n + m⟩     
 
+theorem DiagramPort.zero_tensor_left {C} [TensorProduct C] {X Y: DiagramPort C}
+  (H: (X ⊗ Y).states = 0)
+  : X.states = 0
+  := Nat.le_zero.mp (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_zero.mpr H))
+
+theorem DiagramPort.zero_tensor_right {C} [TensorProduct C] {X Y: DiagramPort C} 
+  (H: (X ⊗ Y).states = 0)
+  : Y.states = 0
+  := Nat.le_zero.mp (Nat.le_trans (Nat.le_add_left _ _) (Nat.le_zero.mpr H))
+
 instance {C: Type u} [TensorMonoid C]: TensorMonoid (DiagramPort C) where
   tensorUnit' := ⟨tensorUnit', 0⟩ 
 
@@ -49,7 +59,7 @@ inductive Diagram {C: Type u}
 | pure {X Y: C}: (Value.box X ⟶ Value.box Y) -> Diagram ⟨X, 0⟩ ⟨Y, 0⟩
 | effectful {X Y: C}: (X ⟶ Y) -> Diagram ⟨tensorUnit' ⊗ X, 1⟩ ⟨tensorUnit' ⊗ Y, 1⟩
 
-def Diagram.pure_separate
+theorem Diagram.state_conservation
   {C: Type u}
   [TensorMonoid C]
   [Quiver.{v} (Value C)]
@@ -57,11 +67,11 @@ def Diagram.pure_separate
   {X Y: DiagramPort C}
   : Diagram X Y -> (X.states = 0 ↔ Y.states = 0)
   | identity _ => by rfl
-  | comp f g => by rw [f.pure_separate, g.pure_separate]
+  | comp f g => by rw [f.state_conservation, g.state_conservation]
   | whiskerLeft ⟨_, n⟩ f => by
-    cases X; cases Y; cases n <;> simp_arith [tensorObj, f.pure_separate]
+    cases X; cases Y; cases n <;> simp_arith [tensorObj, f.state_conservation]
   | whiskerRight f ⟨_, n⟩ => by
-    cases X; cases Y; cases n <;> simp_arith [tensorObj, f.pure_separate]
+    cases X; cases Y; cases n <;> simp_arith [tensorObj, f.state_conservation]
   | associator ⟨_, _⟩ ⟨_, _⟩ ⟨_, _⟩ => by simp [tensorObj, Nat.add_assoc]
   | associator_inv ⟨_, _⟩ ⟨_, _⟩ ⟨_, _⟩ => by simp [tensorObj, Nat.add_assoc]
   | leftUnitor ⟨_, _⟩ 
@@ -70,6 +80,15 @@ def Diagram.pure_separate
   | rightUnitor_inv ⟨_, _⟩ => by simp [tensorObj]
   | braiding ⟨_, _⟩ ⟨_, _⟩ => by simp [tensorObj, Nat.add_comm]
   | split | join | pure _ | effectful _ => by simp
+
+theorem Diagram.no_forgetting
+  {C: Type u}
+  [TensorMonoid C]
+  [Quiver.{v} (Value C)]
+  [Quiver.{v} C]
+  {X Y: DiagramPort C}
+  (D: Diagram X Y): X.states = 0 -> Y.states = 0
+  := by simp [D.state_conservation]
 
 inductive Diagram.inverses {C: Type u}
   [TensorMonoid C]
@@ -208,7 +227,7 @@ def Diagram.semantics {C: Type u}
   [ℰ: EffectfulCategory C]
   {X Y: DiagramPort C}
   : Diagram X Y -> (X.value ⟶ Y.value)
-| identity ⟨X, _⟩ => 𝟙 X
+| identity X => 𝟙 X.value
 | comp f g => f.semantics ≫ g.semantics
 | whiskerLeft Z f => 𝒞.whiskerLeft Z.value f.semantics
 | whiskerRight f Z => 𝒞.whiskerRight f.semantics Z.value
@@ -223,6 +242,28 @@ def Diagram.semantics {C: Type u}
 | join => (𝒞.leftUnitor _).hom
 | pure f => ℰ.inclusion.map' f
 | effectful f => (𝒞.leftUnitor _).hom ≫ f ≫ (𝒞.leftUnitor _).inv
+
+def Diagram.pure_semantics {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [𝒱: PremonoidalCategory (Value C)]
+  [𝒮: SymmetricPremonoidalCategory (Value C)]
+  {X Y: DiagramPort C}
+  : Diagram X Y -> X.states = 0 -> (Value.box X.value ⟶ Value.box Y.value)
+| identity X, _ => 𝟙 (Value.box X.value)
+| comp f g, Hx => f.pure_semantics Hx ≫ g.pure_semantics (f.no_forgetting Hx)
+| whiskerLeft ⟨Z, n⟩ f, Hx => 𝒱.whiskerLeft Z (f.pure_semantics (DiagramPort.zero_tensor_right Hx))
+| whiskerRight f ⟨Z, n⟩, Hx => 𝒱.whiskerRight (f.pure_semantics (DiagramPort.zero_tensor_left Hx)) Z
+| associator X Y Z, _ => (𝒱.associator X.value Y.value Z.value).hom
+| associator_inv X Y Z, _ => (𝒱.associator X.value Y.value Z.value).inv
+| leftUnitor X, _ => (𝒱.leftUnitor X.value).hom
+| leftUnitor_inv X, _ => (𝒱.leftUnitor X.value).inv
+| rightUnitor X, _ => (𝒱.rightUnitor X.value).hom
+| rightUnitor_inv X, _ => (𝒱.rightUnitor X.value).inv
+| braiding X Y, _ => (𝒮.braiding X.value Y.value).hom
+| pure f, _ => f
+| split, Hx | join, Hx | effectful _, Hx => by cases Hx
 
 inductive Diagram.homotopic {C: Type u}
   [TensorMonoid C]
