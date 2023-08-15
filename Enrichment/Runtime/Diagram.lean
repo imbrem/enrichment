@@ -253,8 +253,8 @@ def Diagram.pure_semantics {C: Type u}
   : Diagram X Y -> X.states = 0 -> (Value.box X.value ⟶ Value.box Y.value)
 | identity X, _ => 𝟙 (Value.box X.value)
 | comp f g, Hx => f.pure_semantics Hx ≫ g.pure_semantics (f.no_forgetting Hx)
-| whiskerLeft ⟨Z, n⟩ f, Hx => 𝒱.whiskerLeft Z (f.pure_semantics (DiagramPort.zero_tensor_right Hx))
-| whiskerRight f ⟨Z, n⟩, Hx => 𝒱.whiskerRight (f.pure_semantics (DiagramPort.zero_tensor_left Hx)) Z
+| whiskerLeft Z f, Hx => 𝒱.whiskerLeft Z.value (f.pure_semantics (DiagramPort.zero_tensor_right Hx))
+| whiskerRight f Z, Hx => 𝒱.whiskerRight (f.pure_semantics (DiagramPort.zero_tensor_left Hx)) Z.value
 | associator X Y Z, _ => (𝒱.associator X.value Y.value Z.value).hom
 | associator_inv X Y Z, _ => (𝒱.associator X.value Y.value Z.value).inv
 | leftUnitor X, _ => (𝒱.leftUnitor X.value).hom
@@ -264,6 +264,52 @@ def Diagram.pure_semantics {C: Type u}
 | braiding X Y, _ => (𝒮.braiding X.value Y.value).hom
 | pure f, _ => f
 | split, Hx | join, Hx | effectful _, Hx => by cases Hx
+
+theorem Diagram.semantic_inclusion {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [ℰ: EffectfulCategory C]
+  [𝒮: SymmetricEffectfulCategory C]
+  {X Y: DiagramPort C}
+  : (D: Diagram X Y) -> (H: X.states = 0) -> ℰ.inclusion.map' (D.pure_semantics H) = D.semantics
+  | identity _, _ => ℰ.inclusion.map_id
+  | comp f g, Hx => by
+    rw [
+      pure_semantics,
+      ℰ.inclusion.map_comp',
+      f.semantic_inclusion Hx,
+      g.semantic_inclusion (f.no_forgetting Hx)
+    ]
+    rfl
+  | whiskerLeft Z f, Hx => by
+    rw [
+      pure_semantics,
+      ℰ.inclusion_whiskerLeft,
+      f.semantic_inclusion (DiagramPort.zero_tensor_right Hx)
+    ]
+    rfl
+  | whiskerRight f Z, Hx => by
+    rw [
+      pure_semantics,
+      ℰ.inclusion_whiskerRight,
+      f.semantic_inclusion (DiagramPort.zero_tensor_left Hx)
+    ]
+    rfl
+  | associator X Y Z, _ => ℰ.inclusion_associator X.value Y.value Z.value
+  | associator_inv X Y Z, _ => ℰ.inclusion_associator_inv X.value Y.value Z.value
+  | leftUnitor X, _ => ℰ.inclusion_leftUnitor X.value
+  | leftUnitor_inv X, _ => ℰ.inclusion_leftUnitor_inv X.value
+  | rightUnitor X, _ => ℰ.inclusion_rightUnitor X.value
+  | rightUnitor_inv X, _ => ℰ.inclusion_rightUnitor_inv X.value
+  | braiding X Y, _ => 𝒮.inclusion_braiding X.value Y.value
+  | pure _, _ => rfl
+  | split, Hx | join, Hx | effectful _, Hx => by cases Hx
 
 inductive Diagram.homotopic {C: Type u}
   [TensorMonoid C]
