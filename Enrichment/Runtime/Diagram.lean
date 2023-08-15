@@ -47,7 +47,7 @@ inductive Diagram {C: Type u}
 | split: Diagram state' (state' ⊗ state')
 | join: Diagram (state'⊗ state') state'
 | pure {X Y: C}: (Value.box X ⟶ Value.box Y) -> Diagram ⟨X, 0⟩ ⟨Y, 0⟩
-| effectful {X Y: C}: (X ⟶ Y) -> Diagram ⟨X ⊗ I, 1⟩ ⟨Y ⊗ I, 1⟩
+| effectful {X Y: C}: (X ⟶ Y) -> Diagram ⟨tensorUnit' ⊗ X, 1⟩ ⟨tensorUnit' ⊗ Y, 1⟩
 
 inductive Diagram.inverses {C: Type u}
   [TensorMonoid C]
@@ -142,16 +142,16 @@ inductive Diagram.isotopy {C: Type u}
 | pure_braiding (X Y: C)
   : isotopy (@pure C _ _ _ _ _ (𝒮.braiding X Y).hom) (braiding ⟨X, 0⟩ ⟨Y, 0⟩)
 | effectful_identity (X: C)
-  : isotopy (effectful (𝟙 X)) (identity ⟨X ⊗ tensorUnit', 1⟩)
+  : isotopy (effectful (𝟙 X)) (identity ⟨tensorUnit' ⊗ X, 1⟩)
 --TODO: effectful whiskering?
 | effectful_inclusion_left {X Y Z: C} (f: X ⟶ Y) (g: Value.box Y ⟶ Value.box Z)
   : isotopy 
     (effectful (f ≫ ℰ.inclusion.map' g))
-    (comp (effectful f) (whiskerRight (pure g) state'))
+    (comp (effectful f) (whiskerLeft state' (pure g)))
 | effectful_inclusion_right {X Y Z: C} (f: Value.box X ⟶ Value.box Y) (g: Y ⟶ Z)
   : isotopy 
     (effectful (ℰ.inclusion.map' f ≫ g))
-    (comp (whiskerRight (pure f) state') (effectful g))
+    (comp (whiskerLeft state' (pure f)) (effectful g))
 
 inductive Diagram.isotopic {C: Type u}
   [TensorMonoid C]
@@ -174,6 +174,33 @@ inductive Diagram.isotopic {C: Type u}
 | refl (D: Diagram X Y): D.isotopic D
 | trans (D E F: Diagram X Y): D.isotopic E -> E.isotopic F -> D.isotopic F
 
+def Diagram.semantics {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [𝒞: PremonoidalCategory C]
+  [𝒮: SymmetricPremonoidalCategory C]
+  [ℰ: EffectfulCategory C]
+  {X Y: DiagramPort C}
+  : Diagram X Y -> (X.value ⟶ Y.value)
+| identity ⟨X, _⟩ => 𝟙 X
+| comp f g => f.semantics ≫ g.semantics
+| whiskerLeft Z f => 𝒞.whiskerLeft Z.value f.semantics
+| whiskerRight f Z => 𝒞.whiskerRight f.semantics Z.value
+| associator X Y Z => (𝒞.associator X.value Y.value Z.value).hom
+| associator_inv X Y Z => (𝒞.associator X.value Y.value Z.value).inv
+| leftUnitor X => (𝒞.leftUnitor X.value).hom
+| leftUnitor_inv X => (𝒞.leftUnitor X.value).inv
+| rightUnitor X => (𝒞.rightUnitor X.value).hom
+| rightUnitor_inv X => (𝒞.rightUnitor X.value).inv
+| braiding X Y => (𝒮.braiding X.value Y.value).hom
+| split => (𝒞.leftUnitor _).inv
+| join => (𝒞.leftUnitor _).hom
+| pure f => ℰ.inclusion.map' f
+| effectful f => (𝒞.leftUnitor _).hom ≫ f ≫ (𝒞.leftUnitor _).inv
 
 inductive Diagram.homotopic {C: Type u}
   [TensorMonoid C]
