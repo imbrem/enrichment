@@ -253,6 +253,7 @@ inductive Diagram.association {C: Type u}
   [ℰ: EffectfulCategory C]
   (P: {X Y: DiagramPort C} -> Diagram X Y -> Prop)
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
+  | symm {X Y} {f g: Diagram X Y}: association P f g -> association P g f
   | identity_left {X Y} (f: Diagram X Y): association P (comp f (identity Y)) f
   | identity_right {X Y} (f: Diagram X Y): association P (comp (identity X) f) f
   | comp_assoc {X Y Z W} {f: Diagram X Y} {g: Diagram Y Z} {h: Diagram Z W}
@@ -336,6 +337,34 @@ inductive Diagram.association {C: Type u}
       (effectful (ℰ.inclusion.map' f ≫ g))
       (comp (whiskerLeft state' (pure f)) (effectful g))
 
+def Diagram.pre_isotopy {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [EffectfulCategory C]
+  : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
+  := Diagram.association Diagram.is_pure
+
+inductive Diagram.congruent_mod {C: Type u}
+  [TensorMonoid C]
+  [Quiver (Value C)]
+  [Quiver C]
+  (R: {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop)
+  : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
+| rel {D E: Diagram X Y}: R D E -> D.congruent_mod R E
+| congr_comp {D D': Diagram X Y} {E E': Diagram Y Z}
+  : D.congruent_mod R D' -> E.congruent_mod R E' -> (comp D E).congruent_mod R (comp D' E')
+| congr_whiskerLeft {D D': Diagram X Y} (Z)
+  : D.congruent_mod R D' -> (whiskerLeft Z D).congruent_mod R (whiskerLeft Z D')
+| congr_whiskerRight {D D': Diagram X Y}
+  : D.congruent_mod R D' -> (Z: DiagramPort C) -> (whiskerRight D Z).congruent_mod R (whiskerRight D' Z)
+| refl (D: Diagram X Y): D.congruent_mod R D
+| trans (D E F: Diagram X Y): D.congruent_mod R E -> E.congruent_mod R F -> D.congruent_mod R F
+
 def Diagram.isotopy {C: Type u}
   [TensorMonoid C]
   [Category (Value C)]
@@ -348,7 +377,7 @@ def Diagram.isotopy {C: Type u}
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
   := Diagram.association (λ_ => True)
 
-inductive Diagram.isotopic {C: Type u}
+def Diagram.isotopic {C: Type u}
   [TensorMonoid C]
   [Category (Value C)]
   [Category C]
@@ -358,18 +387,9 @@ inductive Diagram.isotopic {C: Type u}
   [PremonoidalCategory C]
   [EffectfulCategory C]
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
-| isotopy {D E: Diagram X Y}: D.isotopy E -> D.isotopic E
-| isotopy_inv {D E: Diagram X Y}: E.isotopy D -> D.isotopic E
-| congr_comp {D D': Diagram X Y} {E E': Diagram Y Z}
-  : D.isotopic D' -> E.isotopic E' -> (comp D E).isotopic (comp D' E')
-| congr_whiskerLeft {D D': Diagram X Y} (Z)
-  : D.isotopic D' -> (whiskerLeft Z D).isotopic (whiskerLeft Z D')
-| congr_whiskerRight {D D': Diagram X Y}
-  : D.isotopic D' -> (Z: DiagramPort C) -> (whiskerRight D Z).isotopic (whiskerRight D' Z)
-| refl (D: Diagram X Y): D.isotopic D
-| trans (D E F: Diagram X Y): D.isotopic E -> E.isotopic F -> D.isotopic F
+  := Diagram.congruent_mod Diagram.isotopy
 
-inductive Diagram.homotopic {C: Type u}
+inductive Diagram.homotopy {C: Type u}
   [TensorMonoid C]
   [Category (Value C)]
   [Category C]
@@ -381,17 +401,22 @@ inductive Diagram.homotopic {C: Type u}
   [𝒱: OrderedCategory (Value C)]
   [𝒞: OrderedCategory C]
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
-| isotopy {D E: Diagram X Y}: D.isotopy E -> D.homotopic E
-| isotopy_inv {D E: Diagram X Y}: E.isotopy D -> D.homotopic E
+| isotopy {D E: Diagram X Y}: D.isotopy E -> D.homotopy E
 | congr_pure {X Y: C} (f g: Value.box X ⟶ Value.box Y)
-  : 𝒱.hom_ord.le f g -> (pure f).homotopic (pure g)
+  : 𝒱.hom_ord.le f g -> (pure f).homotopy (pure g)
 | congr_effectful {X Y: C} (f g: X ⟶ Y)
-  : 𝒞.hom_ord.le f g -> (effectful f).homotopic (effectful g)
-| congr_comp {D D': Diagram X Y} {E E': Diagram Y Z}
-  : D.homotopic D' -> E.homotopic E' -> (comp D E).homotopic (comp D' E')
-| congr_whiskerLeft {D D': Diagram X Y} (Z)
-  : D.homotopic D' -> (whiskerLeft Z D).homotopic (whiskerLeft Z D')
-| congr_whiskerRight {D D': Diagram X Y}
-  : D.homotopic D' -> (Z: DiagramPort C) -> (whiskerRight D Z).homotopic (whiskerRight D' Z)
-| refl (D: Diagram X Y): D.homotopic D
-| trans (D E F: Diagram X Y): D.homotopic E -> E.homotopic F -> D.homotopic F
+  : 𝒞.hom_ord.le f g -> (effectful f).homotopy (effectful g)
+
+def Diagram.homotopic {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [EffectfulCategory C]
+  [OrderedCategory (Value C)]
+  [OrderedCategory C]
+  : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
+  := Diagram.congruent_mod Diagram.homotopy
