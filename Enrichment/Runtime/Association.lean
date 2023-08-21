@@ -24,8 +24,9 @@ inductive Diagram.inverses {C: Type u}
 | leftUnitor (X): inverses (leftUnitor X) (leftUnitor_inv X)
 | rightUnitor (X): inverses (rightUnitor X) (rightUnitor_inv X)
 | braiding (X Y): inverses (braiding X Y) (braiding Y X)
+| symm {X Y} {f: Diagram X Y} {g: Diagram Y X}: inverses f g -> inverses g f
 
-theorem Diagram.inverses.semantics {C: Type u}
+theorem Diagram.inverses.full_semantics {C: Type u}
   [TensorMonoid C]
   [Category (Value C)]
   [Category C]
@@ -35,11 +36,25 @@ theorem Diagram.inverses.semantics {C: Type u}
   [PremonoidalCategory C]
   [𝒮: SymmetricPremonoidalCategory C]
   [EffectfulCategory C]
-  {X Y: DiagramPort C}
-  (f: Diagram X Y) (g: Diagram Y X)
+  {X Y: DiagramPort C} {f: Diagram X Y} {g: Diagram Y X}
   (I: f.inverses g) 
   : f.semantics ≫ g.semantics = 𝟙 X.value ∧ g.semantics ≫ f.semantics = 𝟙 Y.value
-  := by cases I <;> constructor <;> simp [Diagram.semantics, 𝒮.symmetry] <;> rfl
+  := by induction I <;> constructor <;> simp [Diagram.semantics, 𝒮.symmetry, *] <;> rfl
+
+theorem Diagram.inverses.semantics {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  {X Y: DiagramPort C} {f: Diagram X Y} {g: Diagram Y X}
+  (I: f.inverses g) 
+  : f.semantics ≫ g.semantics = 𝟙 X.value
+  := I.full_semantics.1
 
 inductive Diagram.association {C: Type u}
   [TensorMonoid C]
@@ -53,10 +68,10 @@ inductive Diagram.association {C: Type u}
   (P: {X Y: DiagramPort C} -> Diagram X Y -> Prop)
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
   | hoop: association P (comp split join) (identity state')
-  | identity_left {X Y} (f: Diagram X Y): association P (comp f (identity Y)) f
-  | identity_right {X Y} (f: Diagram X Y): association P (comp (identity X) f) f
-  | comp_assoc {X Y Z W} {f: Diagram X Y} {g: Diagram Y Z} {h: Diagram Z W}
-    : association P (comp f (comp g h)) (comp (comp f g) h)
+  | comp_id {X Y} (f: Diagram X Y): association P (comp f (identity Y)) f
+  | id_comp {X Y} (f: Diagram X Y): association P (comp (identity X) f) f
+  | comp_assoc {X Y Z W} (f: Diagram X Y) (g: Diagram Y Z) (h: Diagram Z W)
+    : association P (comp (comp f g) h) (comp f (comp g h))
   | inv_comp {X Y} {f: Diagram X Y} {g: Diagram Y X}
     : inverses f g -> association P (comp f g) (identity X)
   | whiskerLeft_identity (X Y)
@@ -192,30 +207,6 @@ def Diagram.congruent_mod.weaken {C: Type u}
   | rel H => exact rel (WR H)
   | trans _ _ Il Ir => exact trans Il Ir
   | _ => constructor <;> assumption
-
-def Diagram.pre_isotopy {C: Type u}
-  [TensorMonoid C]
-  [Category (Value C)]
-  [Category C]
-  [PremonoidalCategory (Value C)]
-  [SymmetricPremonoidalCategory (Value C)]
-  [MonoidalCategory' (Value C)]
-  [PremonoidalCategory C]
-  [EffectfulCategory C]
-  : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
-  := Diagram.association Diagram.is_pure
-
-def Diagram.associated {C: Type u}
-  [TensorMonoid C]
-  [Category (Value C)]
-  [Category C]
-  [PremonoidalCategory (Value C)]
-  [SymmetricPremonoidalCategory (Value C)]
-  [MonoidalCategory' (Value C)]
-  [PremonoidalCategory C]
-  [EffectfulCategory C]
-  : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
-  := Diagram.congruent_mod Diagram.pre_isotopy
 
 def Diagram.isotopy {C: Type u}
   [TensorMonoid C]
