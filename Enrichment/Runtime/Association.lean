@@ -68,6 +68,18 @@ inductive Diagram.association {C: Type u}
   (P: {X Y: DiagramPort C} -> Diagram X Y -> Prop)
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
   | hoop: association P (comp split join) (identity state')
+  | split_assoc
+    : association P 
+      (comp (comp split (whiskerRight split state')) (associator state' state' state')) 
+      (comp split (whiskerLeft state' split))
+  | split_braiding
+    : association P (comp split (braiding state' state')) split
+  | join_assoc
+    : association P 
+      (comp (associator state' state' state') (comp (whiskerLeft state' join) join)) 
+      (comp (whiskerRight join state') join)
+  | braiding_join
+    : association P (comp (braiding state' state') join) join
   | comp_id {X Y} (f: Diagram X Y): association P (comp f (identity Y)) f
   | id_comp {X Y} (f: Diagram X Y): association P (comp (identity X) f) f
   | comp_assoc {X Y Z W} (f: Diagram X Y) (g: Diagram Y Z) (h: Diagram Z W)
