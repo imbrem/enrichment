@@ -17,54 +17,64 @@ open PremonoidalCategory
 open DiagramPort
 open Diagram.association
 
--- theorem Diagram.association.slide_semantics {C: Type u}
---   [TensorMonoid C]
---   [CV: Category (Value C)]
---   [CC: Category C]
---   [PremonoidalCategory (Value C)]
---   [SymmetricPremonoidalCategory (Value C)]
---   [MonoidalCategory' (Value C)]
---   [𝒞: PremonoidalCategory C]
---   [𝒮: SymmetricPremonoidalCategory C]
---   [ℰ: EffectfulCategory C]
---   [ℬ: SymmetricEffectfulCategory C]
---   {X Y: DiagramPort C} 
---   {f g: Diagram X Y}
---   : f.association (Diagram.friction.commute C) g -> f.semantics = g.semantics
-  -- | hoop => (𝒞.leftUnitor _).inv_hom_id
-  -- | split_assoc => sorry
-  -- | split_braiding => sorry
-  -- | join_assoc => sorry
-  -- | braiding_join => sorry
-  -- | comp_id _ => CC.comp_id _
-  -- | id_comp _ => CC.id_comp _
-  -- | comp_assoc f g h => CC.assoc f.semantics g.semantics h.semantics
-  -- | inv_comp I => I.semantics
-  -- | whiskerLeft_identity _ _ => sorry
-  -- | whiskerRight_identity _ _ => sorry
-  -- | sliding _ _ H  => H.left
-  -- | associator_left _ => sorry
-  -- | associator_mid _ => sorry
-  -- | associator_right _ => sorry
-  -- | association.leftUnitor _ => sorry
-  -- | association.rightUnitor _ => sorry
-  -- | braiding_left _ => sorry
-  -- | braiding_right _ => sorry
-  -- | association.triangle _ _ => sorry
-  -- | association.pentagon _ _ _ _ => sorry
-  -- | association.hexagon _ _ _ => sorry
-  -- | pure_identity _ => sorry
-  -- | pure_composes _ _ => sorry
-  -- | pure_left _ => sorry
-  -- | pure_right _ => sorry
-  -- | pure_associator X Y Z => ℰ.inclusion_associator X Y Z
-  -- | pure_leftUnitor X => ℰ.inclusion_leftUnitor X
-  -- | pure_rightUnitor X => ℰ.inclusion_rightUnitor X
-  -- | pure_braiding X Y => ℬ.inclusion_braiding X Y
-  -- | effectful_identity _ => sorry
-  -- | effectful_inclusion_left _ _ => sorry
-  -- | effectful_inclusion_right _ _ => sorry
-  -- | association.symm H => sorry
+theorem Diagram.association.slide_semantics {C: Type u}
+  [TensorMonoid C]
+  [CV: Category (Value C)]
+  [CC: Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [𝒞: PremonoidalCategory C]
+  [𝒮: SymmetricPremonoidalCategory C]
+  [ℰ: EffectfulCategory C]
+  [ℬ: SymmetricEffectfulCategory C]
+  {X Y: DiagramPort C} 
+  {f g: Diagram X Y}
+  (H: f.association (Diagram.friction.commute C) g)
+  : f.semantics = g.semantics := by induction H with
+  | hoop => exact (𝒞.leftUnitor _).inv_hom_id
+  | split_assoc => sorry -- by coherence
+  | split_braiding => sorry -- by braiding(I, I) = id
+  | join_assoc => sorry -- by coherence
+  | braiding_join => sorry -- by braiding(I, I) = id
+  | comp_id => exact CC.comp_id _
+  | id_comp => exact CC.id_comp _
+  | comp_assoc f g h => exact CC.assoc f.semantics g.semantics h.semantics
+  | inv_comp I => exact I.semantics
+  | whiskerLeft_identity => exact 𝒞.whiskerLeft_id _ _
+  | whiskerRight_identity => exact 𝒞.id_whiskerRight _ _
+  | sliding _ _ H  => exact H.left
+  | associator_left => exact 𝒞.associator_left_naturality _
+  | associator_mid => exact 𝒞.associator_mid_naturality _
+  | associator_right => exact 𝒞.associator_right_naturality _
+  | leftUnitor => exact 𝒞.leftUnitor_naturality _
+  | rightUnitor => exact 𝒞.rightUnitor_naturality _
+  | braiding_left => exact 𝒮.braiding_left_naturality _ _
+  | braiding_right => exact 𝒮.braiding_right_naturality _ _
+  | triangle => exact 𝒞.triangle _ _
+  | pentagon => exact 𝒞.pentagon _ _ _ _
+  | hexagon => exact 𝒮.hexagon_forward _ _ _
+  | pure_identity => exact ℰ.inclusion.map_id
+  | pure_composes => exact ℰ.inclusion.map_comp' _ _
+  | pure_left => exact ℰ.inclusion_whiskerLeft _
+  | pure_right => exact ℰ.inclusion_whiskerRight _
+  | pure_associator X Y Z => exact ℰ.inclusion_associator X Y Z
+  | pure_leftUnitor X => exact ℰ.inclusion_leftUnitor X
+  | pure_rightUnitor X => exact ℰ.inclusion_rightUnitor X
+  | pure_braiding X Y => exact ℬ.inclusion_braiding X Y
+  | effectful_identity _ => simp [semantics]
+  | effectful_inclusion_left _ _ => 
+    simp only [semantics, Category.assoc, Iso.cancel_iso_hom_left]
+    rw [<-Iso.cancel_iso_hom_right _ _ (PremonoidalCategory.leftUnitor _)]
+    simp [𝒞.leftUnitor_naturality]
+  | effectful_inclusion_right _ _ => 
+    simp only [semantics, Category.assoc]
+    rw [<-Iso.cancel_iso_hom_right _ _ (PremonoidalCategory.leftUnitor _)]
+    simp only [Category.assoc, Iso.inv_hom_id, Category.comp_id]
+    rw [<-CC.assoc]
+    rw [<-𝒞.leftUnitor_naturality]
+    simp [Value.inclusion, Value.box]
+  | symm _ I => exact I.symm
 
 def Diagram.pre_isotopy {C: Type u}
   [TensorMonoid C]
@@ -78,21 +88,21 @@ def Diagram.pre_isotopy {C: Type u}
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
   := Diagram.association (Diagram.friction.unary Diagram.is_pure)
 
--- theorem Diagram.pre_isotopy.semantics {C: Type u}
---   [TensorMonoid C]
---   [Category (Value C)]
---   [Category C]
---   [PremonoidalCategory (Value C)]
---   [SymmetricPremonoidalCategory (Value C)]
---   [MonoidalCategory' (Value C)]
---   [PremonoidalCategory C]
---   [SymmetricPremonoidalCategory C]
---   [EffectfulCategory C]
---   [SymmetricEffectfulCategory C]
---   {X Y: DiagramPort C} 
---   {f g: Diagram X Y}
---   (H: f.pre_isotopy g): f.semantics = g.semantics
---   := (H.weaken (Diagram.friction.pure_commutes C)).slide_semantics
+theorem Diagram.pre_isotopy.semantics {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  [SymmetricEffectfulCategory C]
+  {X Y: DiagramPort C} 
+  {f g: Diagram X Y}
+  (H: f.pre_isotopy g): f.semantics = g.semantics
+  := (H.weaken (Diagram.friction.pure_commutes C)).slide_semantics
 
 def Diagram.associated {C: Type u}
   [TensorMonoid C]

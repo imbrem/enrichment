@@ -106,10 +106,81 @@ abbrev TensorMonoid.tensorUnit (C : Type u) [Category C] [TensorMonoid C] : C :=
 instance TensorMonoid.fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: TensorMonoid C := {
   tensorUnit' := MonoidalCategory.tensorUnit'
 }
-
 namespace PremonoidalCategory
 
 export TensorMonoid (tensorUnit tensorUnit')
+
+theorem associator_epi {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X Y Z: C)
+  : Epi (associator X Y Z).hom
+  := IsIso.epi_of_iso _
+
+theorem associator_inv_epi {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X Y Z: C)
+  : Epi (associator X Y Z).inv
+  := IsIso.epi_of_iso _
+
+theorem leftUnitor_epi {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X: C)
+  : Epi (leftUnitor X).hom
+  := IsIso.epi_of_iso _
+
+theorem leftUnitor_inv_epi {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X: C)
+  : Epi (leftUnitor X).inv
+  := IsIso.epi_of_iso _
+
+theorem rightUnitor_epi {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X: C)
+  : Epi (rightUnitor X).hom
+  := IsIso.epi_of_iso _
+
+theorem rightUnitor_inv_epi {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X: C)
+  : Epi (rightUnitor X).inv
+  := IsIso.epi_of_iso _
+
+theorem associator_mono {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X Y Z: C)
+  : Mono (associator X Y Z).hom
+  := IsIso.mono_of_iso _
+
+theorem associator_inv_mono {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X Y Z: C)
+  : Mono (associator X Y Z).inv
+  := IsIso.mono_of_iso _
+
+theorem leftUnitor_mono {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X: C)
+  : Mono (leftUnitor X).hom
+  := IsIso.mono_of_iso _
+
+theorem leftUnitor_inv_mono {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X: C)
+  : Mono (leftUnitor X).inv
+  := IsIso.mono_of_iso _
+
+theorem rightUnitor_mono {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X: C)
+  : Mono (rightUnitor X).hom
+  := IsIso.mono_of_iso _
+
+theorem rightUnitor_inv_mono {C: Type u} 
+  [Category C] [TensorMonoid C] [PremonoidalCategory C]
+  (X: C)
+  : Mono (rightUnitor X).inv
+  := IsIso.mono_of_iso _
 
 instance fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: PremonoidalCategory C := {
   toBinoidalCategory := BinoidalCategory.fromMonoidalCategory C

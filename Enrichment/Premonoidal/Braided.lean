@@ -13,9 +13,9 @@ open BinoidalCategory
 class BraidedPremonoidalCategory (C: Type u) [Category C] [TensorMonoid C] [PremonoidalCategory C] 
 where  
   braiding : ∀ X Y : C, X ⊗ Y ≅ Y ⊗ X
-  braiding_left_naturality : ∀ {X Y Z: C} (f: X ⟶ Y),
+  braiding_left_naturality : ∀ {X Y: C} (f: X ⟶ Y) (Z),
     (braiding X Z).hom ≫ whiskerLeft Z f = whiskerRight f Z ≫ (braiding Y Z).hom
-  braiding_right_naturality : ∀ {X Y Z: C} (f: X ⟶ Y),
+  braiding_right_naturality : ∀ {X Y: C} (f: X ⟶ Y) (Z),
     (braiding Z X).hom ≫ whiskerRight f Z = whiskerLeft Z f ≫ (braiding Z Y).hom
   hexagon_forward : ∀ X Y Z: C, 
     (associator X Y Z).hom ≫ (braiding X (Y ⊗ Z)).hom ≫ (associator Y Z X).hom =
