@@ -15,6 +15,76 @@ open BinoidalCategory
 open PremonoidalCategory
 open DiagramPort
 
+structure Diagram.friction (C: Type u) 
+  [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
+  where
+  slides: ∀{X₁ Y₁ X₂ Y₂: DiagramPort C}, Diagram X₁ Y₁ -> Diagram X₂ Y₂ -> Prop
+
+def Diagram.friction.bottom (C: Type u) 
+  [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
+  : Diagram.friction C
+  := ⟨λ_ _ => False⟩
+
+def Diagram.friction.top (C: Type u) 
+  [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
+  : Diagram.friction C
+  := ⟨λ_ _ => True⟩
+
+def Diagram.friction.unary {C: Type u} 
+  [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
+  (P: ∀{X Y: DiagramPort C}, Diagram X Y -> Prop)
+  : Diagram.friction C
+  := ⟨λf g => P f ∨ P g⟩
+
+def Diagram.friction.pure (C: Type u)
+  [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
+  : Diagram.friction C
+  := Diagram.friction.unary (Diagram.is_pure)
+
+def Diagram.friction.commute (C: Type u)
+  [TensorMonoid C] 
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  : Diagram.friction C
+  := ⟨λf g => Commute f.semantics g.semantics⟩
+
+instance frictionPartialOrder {C: Type u} 
+  [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
+  : PartialOrder (Diagram.friction C) where
+  le := λP Q => ∀{X₁ Y₁ X₂ Y₂: DiagramPort C} {f: Diagram X₁ Y₁} {g: Diagram X₂ Y₂}, 
+    P.slides f g -> Q.slides f g
+  le_refl := λP => λH => H
+  le_trans := λP Q R HPQ HQR => λHP => HQR (HPQ HP) 
+  le_antisymm := λ⟨P⟩ ⟨Q⟩  HPQ HQP => by
+    apply congrArg
+    repeat (apply funext; intro)
+    apply propext
+    apply Iff.intro
+    apply HPQ
+    apply HQP
+
+theorem Diagram.friction.pure_commutes (C: Type u)
+  [TensorMonoid C] 
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  [SymmetricEffectfulCategory C]
+  : Diagram.friction.pure C ≤ Diagram.friction.commute C
+  := λH => match H with
+  | Or.inl H => H.central.commute _
+  | Or.inr H => (H.central.commute _).symm
+
 inductive Diagram.inverses {C: Type u}
   [TensorMonoid C]
   [Quiver.{v} (Value C)]
@@ -65,7 +135,7 @@ inductive Diagram.association {C: Type u}
   [MonoidalCategory' (Value C)]
   [PremonoidalCategory C]
   [ℰ: EffectfulCategory C]
-  (P: {X Y: DiagramPort C} -> Diagram X Y -> Prop)
+  (P: Diagram.friction C)
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
   | hoop: association P (comp split join) (identity state')
   | split_assoc
@@ -91,7 +161,7 @@ inductive Diagram.association {C: Type u}
   | whiskerRight_identity (X Y)
     : association P (whiskerRight (identity X) Y) (identity (X ⊗ Y))
   | sliding {X₁ Y₁ X₂ Y₂} (f: Diagram X₁ Y₁) (g: Diagram X₂ Y₂)
-    : P f ∨ P g -> association P 
+    : P.slides f g -> association P 
       (comp (whiskerRight f X₂) (whiskerLeft Y₁ g)) 
       (comp (whiskerLeft X₁ g) (whiskerRight f Y₂))
   | associator_left {X Y Z X'} (f: Diagram X X')
@@ -174,18 +244,14 @@ def Diagram.association.weaken {C: Type u}
   [ℰ: EffectfulCategory C]
   {X Y: DiagramPort C}
   {f g: Diagram X Y}
-  {P: {X Y: DiagramPort C} -> Diagram X Y -> Prop}
+  {P: Diagram.friction C}
   (A: f.association P g)
-  (Q: {X Y: DiagramPort C} -> Diagram X Y -> Prop)
-  (WP: ∀{X Y: DiagramPort C}, ∀{f: Diagram X Y}, P f -> Q f)
+  {Q: Diagram.friction C}
+  (WP: P ≤ Q)
   :  f.association Q g
   := by induction A with
-  | symm => apply symm; assumption
-  | sliding _ _ H => 
-    apply sliding; 
-    exact match H with
-    | Or.inl H => Or.inl (WP H)
-    | Or.inr H => Or.inr (WP H)
+  | symm _ I => exact symm I
+  | sliding _ _ H => exact sliding _ _ (WP H)
   | _ => constructor <;> assumption
 
 inductive Diagram.congruent_mod {C: Type u}
@@ -230,7 +296,7 @@ def Diagram.isotopy {C: Type u}
   [PremonoidalCategory C]
   [EffectfulCategory C]
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
-  := Diagram.association (λ_ => True)
+  := Diagram.association (Diagram.friction.top C)
 
 def Diagram.isotopic {C: Type u}
   [TensorMonoid C]

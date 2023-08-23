@@ -168,6 +168,17 @@ def Diagram.pure_semantics {C: Type u}
 | pure f, _ => f
 | effectful _, Hx => Hx.elim
 
+abbrev Diagram.is_pure.semantics {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  {X Y: DiagramPort C}
+  {D: Diagram X Y} 
+  (H: D.is_pure): Value.box X.value ⟶ Value.box Y.value
+  := D.pure_semantics H
+
 theorem Diagram.semantic_inclusion {C: Type u}
   [TensorMonoid C]
   [Category (Value C)]
@@ -215,3 +226,48 @@ theorem Diagram.semantic_inclusion {C: Type u}
   | split, Hx => ℰ.inclusion_leftUnitor_inv _
   | join, Hx => ℰ.inclusion_leftUnitor _
   | effectful _, Hx => by cases Hx
+
+theorem Diagram.is_pure.semantic_inclusion {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [ℰ: EffectfulCategory C]
+  [SymmetricEffectfulCategory C]
+  {X Y: DiagramPort C}
+  {D: Diagram X Y} (H: D.is_pure): ℰ.inclusion.map' (D.pure_semantics H) = D.semantics
+  := D.semantic_inclusion H
+
+theorem Diagram.pure_central {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [ℰ: EffectfulCategory C]
+  [SymmetricEffectfulCategory C]
+  {X Y: DiagramPort C}
+  (D: Diagram X Y) (H: D.is_pure): Central D.semantics
+  := H.semantic_inclusion ▸ ℰ.inclusion_central _
+
+theorem Diagram.is_pure.central {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  [SymmetricEffectfulCategory C]
+  {X Y: DiagramPort C}
+  {D: Diagram X Y} (H: D.is_pure): Central D.semantics
+  := D.pure_central H

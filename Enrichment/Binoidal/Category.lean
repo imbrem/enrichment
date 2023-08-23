@@ -29,17 +29,14 @@ class BinoidalCategory (C: Type u) [Category C] [TensorProduct C] :=
     : whiskerRight (f ≫ g) X = whiskerRight f X ≫ whiskerRight g X
 
   /-- left tensor product `f ⋉ g` -/
-  leftTensorHom {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) : (tensorObj X₁ X₂ ⟶ tensorObj Y₁ Y₂) :=
-    whiskerRight f _ ≫ whiskerLeft _ g
-  /-- right tensor product `f ⋊ g` -/
-  rightTensorHom {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) : (tensorObj X₁ X₂ ⟶ tensorObj Y₁ Y₂) :=
-    whiskerLeft _ g ≫ whiskerRight f _
-  leftTensorHom_def {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) :
-    leftTensorHom f g = whiskerRight f _ ≫ whiskerLeft _ g := by
-      aesop_cat
-  rightTensorHom_def {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) :
-    rightTensorHom f g = whiskerLeft _ g ≫ whiskerRight f _ := by
-      aesop_cat
+def BinoidalCategory.leftTensorHom {C: Type u} [Category C] [TensorProduct C] [BinoidalCategory C]
+  {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) 
+  : (tensorObj X₁ X₂ ⟶ tensorObj Y₁ Y₂) := whiskerRight f _ ≫ whiskerLeft _ g
+
+  /-- right tensor product `f ⋉ g` -/
+def BinoidalCategory.rightTensorHom {C: Type u} [Category C] [TensorProduct C] [BinoidalCategory C]
+  {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) 
+  : (tensorObj X₁ X₂ ⟶ tensorObj Y₁ Y₂) := whiskerLeft _ g ≫ whiskerRight f _
 
 /- Notation based on https://www.dpmms.cam.ac.uk/~martin/Research/Publications/2002/bh02.pdf -/
 
@@ -73,26 +70,65 @@ instance fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: Bin
   whiskerRight_comp := by simp [<-MonoidalCategory.tensorHom_id]
 }
 
-abbrev Commute {C} [Category C] [TensorProduct C] [BinoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
+abbrev OrdCommute {C} [Category C] [TensorProduct C] [BinoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
   := f ⋉ g = f ⋊ g
 
-def monoidalCommute {C} [Category C] [MonoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
+def OrdCommute.monoidal {C} [Category C] [MonoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
+  : OrdCommute f g
+  := by simp [
+    OrdCommute, leftTensorHom, rightTensorHom, whiskerLeft, whiskerRight,
+    MonoidalCategory.whisker_exchange
+  ]
+
+class Commute {C} [Category C] [TensorProduct C] [BinoidalCategory C] 
+  {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W): Prop
+  where
+  left: OrdCommute f g
+  right: OrdCommute g f
+
+def Commute.symm
+  [Category C] [TensorProduct C] [BinoidalCategory C] 
+  {X Y Z W: C} {f: X ⟶ Y} {g: Z ⟶ W}
+  (H: Commute f g)
+  : Commute g f
+  := ⟨H.2, H.1⟩  
+
+def Commute.monoidal {C} [Category C] [MonoidalCategory C] {X Y Z W: C} (f: X ⟶ Y) (g: Z ⟶ W)
   : Commute f g
-  := by simp [Commute, leftTensorHom, rightTensorHom, MonoidalCategory.whisker_exchange]
+  := ⟨OrdCommute.monoidal f g, OrdCommute.monoidal g f⟩  
+
+-- instance monoidalCommute
+--   {C} [Category C] [MonoidalCategory C]
+--   {X Y Z W: C} {f: X ⟶ Y} {g: Z ⟶ W}
+--   : Commute f g
+--   := Commute.monoidal f g
 
 class Central {C} [Category C] [TensorProduct C] [BinoidalCategory C] {X Y: C} (f: X ⟶ Y) :=
-  commute_left: ∀{Z W}, ∀g: Z ⟶ W, Commute f g
-  commute_right: ∀{Z W}, ∀g: Z ⟶ W, Commute g f
+  commute: ∀{Z W}, ∀g: Z ⟶ W, Commute f g
+  commute_left: ∀{Z W}, ∀g: Z ⟶ W, OrdCommute f g := λg => (commute g).left
+  commute_right: ∀{Z W}, ∀g: Z ⟶ W, OrdCommute g f := λg => (commute g).right
 
 class CentralIso {C} [Category C] [TensorProduct C] [BinoidalCategory C] {X Y: C} (f: X ≅ Y) :=
   hom: Central f.hom
   inv: Central f.inv
 
 instance monoidalCentral {C: Type u} [Category C] [MonoidalCategory C] {X Y: C} (f: X ⟶ Y)
-: Central f := {
-  commute_left := λg => monoidalCommute f g
-  commute_right := λg => monoidalCommute g f
-}
+  : Central f where
+  commute := λg => Commute.monoidal f g
+
+instance centralLeft {C} 
+  [Category C] [TensorProduct C] [BinoidalCategory C] 
+  {X Y Z W: C} {f: X ⟶ Y} {g: Z ⟶ W}
+  [H: Central f]
+  : Commute f g 
+  := H.commute g
+
+instance centralRight {C} 
+  [Category C] [TensorProduct C] [BinoidalCategory C] 
+  {X Y Z W: C} {f: X ⟶ Y} {g: Z ⟶ W}
+  [H: Central g]
+  : Commute f g 
+  := (H.commute f).symm
 
 instance monoidalCentralIso {C: Type u} [Category C] [MonoidalCategory C] {X Y: C} (f: X ≅ Y)
 : CentralIso f := {
