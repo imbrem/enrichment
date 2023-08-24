@@ -64,20 +64,26 @@ def Diagram.friction.commute (C: Type u)
   : Diagram.friction C
   := ⟨λf g => Commute f.semantics g.semantics⟩
 
+structure Diagram.friction.refines {C: Type u}
+  [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
+  (P Q: Diagram.friction C): Prop
+  where
+  refines: ∀{X₁ Y₁ X₂ Y₂: DiagramPort C} {f: Diagram X₁ Y₁} {g: Diagram X₂ Y₂}, 
+    P.slides f g -> Q.slides f g
+
 instance frictionPartialOrder {C: Type u} 
   [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
   : PartialOrder (Diagram.friction C) where
-  le := λP Q => ∀{X₁ Y₁ X₂ Y₂: DiagramPort C} {f: Diagram X₁ Y₁} {g: Diagram X₂ Y₂}, 
-    P.slides f g -> Q.slides f g
-  le_refl := λP => λH => H
-  le_trans := λP Q R HPQ HQR => λHP => HQR (HPQ HP) 
+  le := λP Q => P.refines Q
+  le_refl := λP => ⟨λH => H⟩ 
+  le_trans := λP Q R HPQ HQR => ⟨λHP => HQR.refines (HPQ.refines HP)⟩  
   le_antisymm := λ⟨P⟩ ⟨Q⟩  HPQ HQP => by
     apply congrArg
     repeat (apply funext; intro)
     apply propext
     apply Iff.intro
-    apply HPQ
-    apply HQP
+    apply HPQ.refines
+    apply HQP.refines
 
 theorem Diagram.friction.pure_commutes (C: Type u)
   [TensorMonoid C] 
@@ -91,9 +97,9 @@ theorem Diagram.friction.pure_commutes (C: Type u)
   [EffectfulCategory C]
   [SymmetricEffectfulCategory C]
   : Diagram.friction.pure C ≤ Diagram.friction.commute C
-  := λH => match H with
+  := ⟨λH => match H with
   | Or.inl H => H.central.commute _
-  | Or.inr H => (H.central.commute _).symm
+  | Or.inr H => (H.central.commute _).symm⟩
 
 structure Diagram.relation (C: Type u)
   [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
@@ -110,6 +116,19 @@ def Diagram.relation.diagonal (C: Type u)
   : Diagram.relation C
   := ⟨λf g => f = g⟩
 
+def Diagram.relation.semantic_diagonal (C: Type u)
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  : Diagram.relation C
+  := ⟨λf g => f.semantics = g.semantics⟩
+
 def Diagram.relation.full (C: Type u)
   [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
   : Diagram.relation C
@@ -121,20 +140,39 @@ def Diagram.relation.unary {C: Type u}
   : Diagram.relation C
   := ⟨λf g => P f ∨ P g⟩
 
+structure Diagram.relation.refines {C: Type u} 
+  [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
+  (P Q: Diagram.relation C): Prop
+  where
+  refines: ∀{X Y: DiagramPort C} {f: Diagram X Y} {g: Diagram X Y}, 
+    P.rel f g -> Q.rel f g
+
 instance relationPartialOrder {C: Type u} 
   [TensorMonoid C] [Quiver.{v} (Value C)] [Quiver.{v} C]
   : PartialOrder (Diagram.relation C) where
-  le := λP Q => ∀{X Y: DiagramPort C} {f: Diagram X Y} {g: Diagram X Y}, 
-    P.rel f g -> Q.rel f g
-  le_refl := λP => λH => H
-  le_trans := λP Q R HPQ HQR => λHP => HQR (HPQ HP) 
+  le := λP Q => P.refines Q
+  le_refl := λP => ⟨λH => H⟩
+  le_trans := λP Q R HPQ HQR => ⟨λHP => HQR.refines (HPQ.refines HP)⟩ 
   le_antisymm := λ⟨P⟩ ⟨Q⟩  HPQ HQP => by
     apply congrArg
     repeat (apply funext; intro)
     apply propext
     apply Iff.intro
-    apply HPQ
-    apply HQP
+    apply HPQ.refines
+    apply HQP.refines
+
+def Diagram.relation.diagonal_refines_semantic_diagonal (C: Type u)
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  : diagonal C ≤ semantic_diagonal C
+  := ⟨λH => H ▸ rfl⟩ 
 
 inductive Diagram.inverses {C: Type u}
   [TensorMonoid C]
@@ -297,6 +335,19 @@ def Diagram.friction.association {C: Type u}
   : Diagram.relation C
   := ⟨Diagram.association P⟩  
 
+def Diagram.relation.sliding (C: Type u)
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  : Diagram.relation C
+  := (Diagram.friction.commute C).association
+
 def Diagram.association.weaken {C: Type u}
   [TensorMonoid C]
   [Category (Value C)]
@@ -315,10 +366,10 @@ def Diagram.association.weaken {C: Type u}
   :  f.association Q g
   := by induction A with
   | symm _ I => exact symm I
-  | sliding _ _ H => exact sliding _ _ (WP H)
+  | sliding _ _ H => exact sliding _ _ (WP.refines H)
   | _ => constructor <;> assumption
 
-def Diagram.friction.association.monotone (C: Type u)
+theorem Diagram.friction.association.monotone (C: Type u)
   [TensorMonoid C]
   [Category (Value C)]
   [Category C]
@@ -328,7 +379,21 @@ def Diagram.friction.association.monotone (C: Type u)
   [PremonoidalCategory C]
   [EffectfulCategory C]
   : Monotone (@Diagram.friction.association C _ _ _ _ _ _ _ _)
-  := λ_ _ HRS => λH => H.weaken HRS
+  := λ_ _ HRS => ⟨λH => H.weaken HRS⟩
+
+theorem Diagram.friction.refines.association {C: Type u}
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [EffectfulCategory C]
+  {P Q: Diagram.friction C}
+  (H: P.refines Q)
+  : P.association ≤ Q.association
+  := Diagram.friction.association.monotone C H
 
 instance associationMonotone {C: Type u}
   [TensorMonoid C]
@@ -366,25 +431,6 @@ def Diagram.relation.congruent_mod {C: Type u}
   : Diagram.relation C
   := ⟨Diagram.congruent_mod R⟩
 
-theorem Diagram.relation.congruent_mod.idempotent
-  {C: Type u}
-  [TensorMonoid C]
-  [Quiver (Value C)]
-  [Quiver C]
-  : (R: Diagram.relation C) -> R.congruent_mod.congruent_mod = R.congruent_mod
-  | ⟨R⟩ => by
-    apply congrArg Diagram.relation.mk
-    funext X Y f g
-    apply propext
-    apply Iff.intro
-    case mp => 
-      intro H
-      induction H with
-      | rel => assumption
-      | trans => apply Diagram.congruent_mod.trans <;> assumption
-      | _ => constructor <;> assumption
-    case mpr => exact λH => Diagram.congruent_mod.rel H
-
 theorem Diagram.congruent_mod.weaken {C: Type u}
   [TensorMonoid C]
   [Quiver (Value C)]
@@ -397,16 +443,83 @@ theorem Diagram.congruent_mod.weaken {C: Type u}
   (WR: R ≤ S)
   :  f.congruent_mod S g
   := by induction A with
-  | rel H => exact rel (WR H)
+  | rel H => exact rel (WR.refines H)
   | trans _ _ Il Ir => exact trans Il Ir
   | _ => constructor <;> assumption
 
-def Diagram.relation.congruent_mod.monotone (C: Type u)
+theorem Diagram.relation.congruent_mod.monotone (C: Type u)
   [TensorMonoid C]
   [Quiver (Value C)]
   [Quiver C]
   : Monotone (@Diagram.relation.congruent_mod C _ _ _)
-  := λ_ _ HRS => λH => H.weaken HRS
+  := λ_ _ HRS => ⟨λH => H.weaken HRS⟩
+
+def Diagram.relation.refines.congruent_mod {C: Type u}
+  [TensorMonoid C]
+  [Quiver (Value C)]
+  [Quiver C]
+  {P Q: Diagram.relation C}
+  (H: P.refines Q)
+  : P.congruent_mod ≤ Q.congruent_mod
+  := Diagram.relation.congruent_mod.monotone C H
+
+theorem Diagram.relation.congruent_mod.increasing {C: Type u}
+  [TensorMonoid C]
+  [Quiver (Value C)]
+  [Quiver C]
+  (P: Diagram.relation C)
+  : P ≤ P.congruent_mod
+  := ⟨Diagram.congruent_mod.rel⟩
+
+theorem Diagram.relation.congruent_mod.idempotent'
+  {C: Type u}
+  [TensorMonoid C]
+  [Quiver (Value C)]
+  [Quiver C]
+  (R: Diagram.relation C): R.congruent_mod.congruent_mod ≤ R.congruent_mod
+  := ⟨λH => by induction H with
+      | rel => assumption
+      | trans => apply Diagram.congruent_mod.trans <;> assumption
+      | _ => constructor <;> assumption⟩
+
+theorem Diagram.relation.congruent_mod.idempotent
+  {C: Type u}
+  [TensorMonoid C]
+  [Quiver (Value C)]
+  [Quiver C]
+  (R: Diagram.relation C): R.congruent_mod.congruent_mod = R.congruent_mod
+  := le_antisymm (idempotent' _) (increasing _)
+
+theorem Diagram.relation.congruent_mod.fix_semantic_diagonal'
+  (C: Type u)
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  : (semantic_diagonal C).congruent_mod ≤ semantic_diagonal C
+  := ⟨λH => by induction H with
+      | rel => assumption
+      | trans => apply Eq.trans <;> assumption
+      | _ => simp only [semantic_diagonal, semantics] at * <;> simp only [*]⟩
+
+theorem Diagram.relation.congruent_mod.fix_semantic_diagonal
+  (C: Type u)
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  : (semantic_diagonal C).congruent_mod = semantic_diagonal C
+  := le_antisymm (fix_semantic_diagonal' C) (increasing _)
 
 instance congruentModMonotone
   {C: Type u}
@@ -524,7 +637,7 @@ def Diagram.relation.homotopic (C: Type u)
   : Diagram.relation C
   := (Diagram.relation.homotopy C).congruent_mod
 
-def Diagram.relation.isotopy_is_homotopy (C: Type u)
+theorem Diagram.relation.isotopy_is_homotopy (C: Type u)
   [TensorMonoid C]
   [Category (Value C)]
   [Category C]
@@ -536,9 +649,9 @@ def Diagram.relation.isotopy_is_homotopy (C: Type u)
   [OrderedCategory (Value C)]
   [OrderedCategory C]
   : isotopy C ≤ homotopy C
-  := Diagram.homotopy.isotopy
+  := ⟨Diagram.homotopy.isotopy⟩ 
 
-def Diagram.relation.isotopic_is_homotopic (C: Type u)
+theorem Diagram.relation.isotopic_is_homotopic (C: Type u)
   [TensorMonoid C]
   [Category (Value C)]
   [Category C]
@@ -550,4 +663,4 @@ def Diagram.relation.isotopic_is_homotopic (C: Type u)
   [OrderedCategory (Value C)]
   [OrderedCategory C]
   : isotopic C ≤ homotopic C
-  := congruent_mod.monotone C (isotopy_is_homotopy C)
+  := (isotopy_is_homotopy C).congruent_mod

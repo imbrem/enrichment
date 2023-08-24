@@ -76,6 +76,20 @@ theorem Diagram.association.slide_semantics {C: Type u}
     simp [Value.inclusion, Value.box]
   | symm _ I => exact I.symm
 
+theorem Diagram.relation.sliding_refines_semantic_diagonal (C: Type u)
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [SymmetricPremonoidalCategory C]
+  [EffectfulCategory C]
+  [SymmetricEffectfulCategory C]
+  : sliding C ≤ semantic_diagonal C
+  := ⟨λH => H.slide_semantics⟩
+
 -- def Diagram.congruent_mod.eq_semantics {C: Type u}
 --   [TensorMonoid C]
 --   [CV: Category (Value C)]
