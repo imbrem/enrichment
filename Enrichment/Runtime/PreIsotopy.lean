@@ -76,6 +76,40 @@ theorem Diagram.association.slide_semantics {C: Type u}
     simp [Value.inclusion, Value.box]
   | symm _ I => exact I.symm
 
+-- def Diagram.congruent_mod.eq_semantics {C: Type u}
+--   [TensorMonoid C]
+--   [CV: Category (Value C)]
+--   [CC: Category C]
+--   [PremonoidalCategory (Value C)]
+--   [SymmetricPremonoidalCategory (Value C)]
+--   [MonoidalCategory' (Value C)]
+--   [𝒞: PremonoidalCategory C]
+--   [𝒮: SymmetricPremonoidalCategory C]
+--   [ℰ: EffectfulCategory C]
+--   [ℬ: SymmetricEffectfulCategory C]
+--   {X Y: DiagramPort C} 
+--   {f g: Diagram X Y}
+--   (H: f.congruent_mod (Diagram.relation.diagonal C) g)
+--   : f.semantics = g.semantics
+--   := sorry
+
+-- def Diagram.congruent_mod.slide_semantics {C: Type u}
+--   [TensorMonoid C]
+--   [CV: Category (Value C)]
+--   [CC: Category C]
+--   [PremonoidalCategory (Value C)]
+--   [SymmetricPremonoidalCategory (Value C)]
+--   [MonoidalCategory' (Value C)]
+--   [𝒞: PremonoidalCategory C]
+--   [𝒮: SymmetricPremonoidalCategory C]
+--   [ℰ: EffectfulCategory C]
+--   [ℬ: SymmetricEffectfulCategory C]
+--   {X Y: DiagramPort C} 
+--   {f g: Diagram X Y}
+--   (H: f.congruent_mod (Diagram.friction.commute C).association g)
+--   : f.semantics = g.semantics
+--   := sorry
+
 def Diagram.pre_isotopy {C: Type u}
   [TensorMonoid C]
   [Category (Value C)]
@@ -104,7 +138,7 @@ theorem Diagram.pre_isotopy.semantics {C: Type u}
   (H: f.pre_isotopy g): f.semantics = g.semantics
   := (H.weaken (Diagram.friction.pure_commutes C)).slide_semantics
 
-def Diagram.associated {C: Type u}
+def Diagram.pre_isotopic {C: Type u}
   [TensorMonoid C]
   [Category (Value C)]
   [Category C]
@@ -114,4 +148,28 @@ def Diagram.associated {C: Type u}
   [PremonoidalCategory C]
   [EffectfulCategory C]
   : {X Y: DiagramPort C} -> Diagram X Y -> Diagram X Y -> Prop
-  := Diagram.congruent_mod Diagram.pre_isotopy
+  := Diagram.congruent_mod ⟨Diagram.pre_isotopy⟩ 
+
+def Diagram.relation.pre_isotopy (C: Type u)
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [EffectfulCategory C]
+  : Diagram.relation C
+  := ⟨Diagram.pre_isotopy⟩ 
+
+def Diagram.relation.pre_isotopic (C: Type u)
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [EffectfulCategory C]
+  : Diagram.relation C
+  := (Diagram.relation.pre_isotopy C).congruent_mod
