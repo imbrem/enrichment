@@ -523,3 +523,31 @@ def Diagram.relation.homotopic (C: Type u)
   [OrderedCategory C]
   : Diagram.relation C
   := (Diagram.relation.homotopy C).congruent_mod
+
+def Diagram.relation.isotopy_is_homotopy (C: Type u)
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [EffectfulCategory C]
+  [OrderedCategory (Value C)]
+  [OrderedCategory C]
+  : isotopy C ≤ homotopy C
+  := Diagram.homotopy.isotopy
+
+def Diagram.relation.isotopic_is_homotopic (C: Type u)
+  [TensorMonoid C]
+  [Category (Value C)]
+  [Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [PremonoidalCategory C]
+  [EffectfulCategory C]
+  [OrderedCategory (Value C)]
+  [OrderedCategory C]
+  : isotopic C ≤ homotopic C
+  := congruent_mod.monotone C (isotopy_is_homotopy C)
