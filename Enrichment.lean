@@ -8,3 +8,4 @@ import Enrichment.Effectful.Braided
 import Enrichment.Runtime.Diagram
 import Enrichment.Runtime.Association
 import Enrichment.Runtime.PreIsotopy
+import Enrichment.TraceMonad.Basic
