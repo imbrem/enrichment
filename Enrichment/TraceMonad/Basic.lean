@@ -2,16 +2,16 @@ import Mathlib.Algebra.Group.Defs
 import Mathlib.GroupTheory.GroupAction.Defs
 import Mathlib.Data.Set.Image
 
-structure TraceMonad (ε τ α: Type): Type where
+structure TraceMonad (ε: Type u1) (τ: Type u2) (α: Type u3): Type (max u1 (max u2 u3)) where
   terminating: α -> ε -> Prop
   nonterminating: τ -> Prop
   nonempty: (∃a e, terminating a e) ∨ (∃t, nonterminating t)
 
-theorem TraceMonad.mk.injEq' {ε τ α: Type} (t t': TraceMonad ε τ α)
+theorem TraceMonad.mk.injEq' {ε τ α} (t t': TraceMonad ε τ α)
   : t.terminating = t'.terminating ∧ t.nonterminating = t'.nonterminating ↔ t = t'
   := by cases t; cases t'; simp
 
-theorem TraceMonad.mk.injEq_mp {ε τ α: Type} (t t': TraceMonad ε τ α)
+theorem TraceMonad.mk.injEq_mp {ε τ α} (t t': TraceMonad ε τ α)
   : t.terminating = t'.terminating ∧ t.nonterminating = t'.nonterminating -> t = t'
   := by cases t; cases t'; simp
 
@@ -64,7 +64,7 @@ def TraceMonad.map' {ε τ α β} (f: α -> β) (x: TraceMonad ε τ α): TraceM
     | Or.inl ⟨a, e, H⟩ => Or.inl ⟨f a, e, a, H, rfl⟩ 
     | Or.inr H => Or.inr H
 
-def TraceMonad.pure' {α} (ε τ: Type) [Mul ε] [One ε] (a: α): TraceMonad ε τ α where
+def TraceMonad.pure' {α} (ε τ) [Mul ε] [One ε] (a: α): TraceMonad ε τ α where
   terminating a' e := a = a' ∧ e = 1
   nonterminating _ := False
   nonempty := Or.inl ⟨a, 1, rfl, rfl⟩
