@@ -90,39 +90,45 @@ theorem Diagram.relation.sliding_refines_semantic_diagonal (C: Type u)
   : sliding C ≤ semantic_diagonal C
   := ⟨λH => H.slide_semantics⟩
 
--- def Diagram.congruent_mod.eq_semantics {C: Type u}
---   [TensorMonoid C]
---   [CV: Category (Value C)]
---   [CC: Category C]
---   [PremonoidalCategory (Value C)]
---   [SymmetricPremonoidalCategory (Value C)]
---   [MonoidalCategory' (Value C)]
---   [𝒞: PremonoidalCategory C]
---   [𝒮: SymmetricPremonoidalCategory C]
---   [ℰ: EffectfulCategory C]
---   [ℬ: SymmetricEffectfulCategory C]
---   {X Y: DiagramPort C} 
---   {f g: Diagram X Y}
---   (H: f.congruent_mod (Diagram.relation.diagonal C) g)
---   : f.semantics = g.semantics
---   := sorry
+theorem Diagram.congruent_mod.slide_semantics {C: Type u}
+  [TensorMonoid C]
+  [CV: Category (Value C)]
+  [CC: Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [𝒞: PremonoidalCategory C]
+  [𝒮: SymmetricPremonoidalCategory C]
+  [ℰ: EffectfulCategory C]
+  [ℬ: SymmetricEffectfulCategory C]
+  {X Y: DiagramPort C} 
+  {f g: Diagram X Y}
+  (H: f.congruent_mod (Diagram.friction.commute C).association g)
+  : f.semantics = g.semantics
+  := by induction H with
+  | refl _ => rfl
+  | rel H => exact H.slide_semantics
+  | _ => simp [semantics, *]
 
--- def Diagram.congruent_mod.slide_semantics {C: Type u}
---   [TensorMonoid C]
---   [CV: Category (Value C)]
---   [CC: Category C]
---   [PremonoidalCategory (Value C)]
---   [SymmetricPremonoidalCategory (Value C)]
---   [MonoidalCategory' (Value C)]
---   [𝒞: PremonoidalCategory C]
---   [𝒮: SymmetricPremonoidalCategory C]
---   [ℰ: EffectfulCategory C]
---   [ℬ: SymmetricEffectfulCategory C]
---   {X Y: DiagramPort C} 
---   {f g: Diagram X Y}
---   (H: f.congruent_mod (Diagram.friction.commute C).association g)
---   : f.semantics = g.semantics
---   := sorry
+def Diagram.congruent_mod.eq_semantics {C: Type u}
+  [TensorMonoid C]
+  [CV: Category (Value C)]
+  [CC: Category C]
+  [PremonoidalCategory (Value C)]
+  [SymmetricPremonoidalCategory (Value C)]
+  [MonoidalCategory' (Value C)]
+  [𝒞: PremonoidalCategory C]
+  [𝒮: SymmetricPremonoidalCategory C]
+  [ℰ: EffectfulCategory C]
+  [SymmetricEffectfulCategory C]
+  {X Y: DiagramPort C} 
+  {f g: Diagram X Y}
+  (H: f.congruent_mod (Diagram.relation.diagonal C) g)
+  : f.semantics = g.semantics
+  := by induction H with
+  | refl _ => rfl
+  | rel H => cases H; rfl
+  | _ => simp [semantics, *]
 
 def Diagram.pre_isotopy {C: Type u}
   [TensorMonoid C]

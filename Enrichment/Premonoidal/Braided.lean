@@ -22,12 +22,11 @@ where
     whiskerRight (braiding X Y).hom Z ≫ (associator Y X Z).hom ≫ whiskerLeft Y (braiding X Z).hom
   hexagon_reverse : ∀ X Y Z: C,
     (associator X Y Z).inv ≫ (braiding (X ⊗ Y) Z).hom ≫ (associator Z X Y).inv =
-    whiskerLeft X (braiding Y Z).hom ≫ (associator X Z Y).inv ≫ whiskerRight (braiding X Z).hom Y  
+    whiskerLeft X (braiding Y Z).hom ≫ (associator X Z Y).inv ≫ whiskerRight (braiding X Z).hom Y
 
 class SymmetricPremonoidalCategory (C: Type u) [Category C] [TensorMonoid C] [PremonoidalCategory C] 
 extends BraidedPremonoidalCategory C where
   symmetry : ∀ X Y : C, (braiding X Y).hom ≫ (braiding Y X).hom = 𝟙 (X ⊗ Y)
-
 namespace BraidedPremonoidalCategory
 
 instance fromBraidedCategory {C: Type u} [Category C] [MonoidalCategory C] [BraidedCategory C]
