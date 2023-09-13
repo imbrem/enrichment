@@ -12,40 +12,40 @@ class TraceAction (α: Type u) (β: Type v)
   where
   fromTrace_assoc: ∀a: α, ∀f: Stream' α, a • fromTrace f = fromTrace (f.cons a)
 
-def TraceMonad.iterated {ε τ α β} 
+def OptTraces.iterated {ε τ α β} 
   [Mul ε] [One ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
-  : ℕ -> α-> TraceMonad ε τ (β ⊕ α)
+  (f: α -> OptTraces ε τ (β ⊕ α))
+  : ℕ -> α-> OptTraces ε τ (β ⊕ α)
   | 0, a => pure (Sum.inr a)
-  | n + 1, a => (TraceMonad.iterated f n a) >>= Sum.elim (pure ∘ Sum.inl) f
+  | n + 1, a => (OptTraces.iterated f n a) >>= Sum.elim (pure ∘ Sum.inl) f
 
-def TraceMonad.is_trace_step {ε τ α β}
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+def OptTraces.is_trace_step {ε τ α β}
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
   (r: α)
   (e: ε)
   : Prop
   := (f a).terminating (Sum.inr r) e
 
-theorem TraceMonad.iterated_terminating_zero {ε τ α β}
+theorem OptTraces.iterated_terminating_zero {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
   (c e)
   : (iterated f 0 a).terminating c e ↔ (Sum.inr a = c ∧ e = 1)
   := by rfl
 
-theorem TraceMonad.iterated_nonterminating_zero {ε τ α β}
+theorem OptTraces.iterated_nonterminating_zero {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
   (t)
   : (iterated f 0 a).nonterminating t ↔ False
   := by rfl
 
-theorem TraceMonad.iterated_terminating_succ {ε τ α β}
+theorem OptTraces.iterated_terminating_succ {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (n: ℕ)
   (a: α)
   (c e)
@@ -56,9 +56,9 @@ theorem TraceMonad.iterated_terminating_succ {ε τ α β}
       e = e' * e'')
   := by rfl
 
-theorem TraceMonad.iterated_nonterminating_succ {ε τ α β}
+theorem OptTraces.iterated_nonterminating_succ {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (n: ℕ)
   (a: α)
   (t)
@@ -69,9 +69,9 @@ theorem TraceMonad.iterated_nonterminating_succ {ε τ α β}
         ∧ t = e • t'
   := by rfl
 
-theorem TraceMonad.iterated_terminating_succ' {ε τ α β}
+theorem OptTraces.iterated_terminating_succ' {ε τ α β}
   [Monoid ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (n: ℕ)
   (a: α)
   (c e)
@@ -90,9 +90,9 @@ theorem TraceMonad.iterated_terminating_succ' {ε τ α β}
       | Or.inr ⟨a', e', e'', Hfn, Hf, He⟩ => ⟨Sum.inr a', e', e'', Hfn, Hf, He⟩
     ⟩
 
-theorem TraceMonad.iterated_nonterminating_succ' {ε τ α β}
+theorem OptTraces.iterated_nonterminating_succ' {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (n: ℕ)
   (a: α)
   (t)
@@ -110,9 +110,9 @@ theorem TraceMonad.iterated_nonterminating_succ' {ε τ α β}
     | Or.inr ⟨a', e, t', Ha', Ht', Ht⟩ => Or.inr ⟨Sum.inr a', e, t', Ha', Ht', Ht⟩   
   ⟩ 
 
-theorem TraceMonad.iterated_terminating_succ_inr {ε τ α β}
+theorem OptTraces.iterated_terminating_succ_inr {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (n: ℕ)
   (a: α)
   (a' e)
@@ -128,59 +128,59 @@ theorem TraceMonad.iterated_terminating_succ_inr {ε τ α β}
       λ ⟨a', e', e'', Hfn, Hf, He⟩ => ⟨Sum.inr a', e', e'', Hfn, Hf, He⟩
     ⟩
 
-def TraceMonad.iterated_terminating {ε τ α β}
+def OptTraces.iterated_terminating {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α) (b: β) (e: ε): Prop
-  := ∃n: ℕ, (TraceMonad.iterated f n a).terminating (Sum.inl b) e
+  := ∃n: ℕ, (OptTraces.iterated f n a).terminating (Sum.inl b) e
 
-def TraceMonad.iterated_nonterminating {ε τ α β}
+def OptTraces.iterated_nonterminating {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α) (t: τ): Prop
-  := ∃n: ℕ, (TraceMonad.iterated f n a).nonterminating t
+  := ∃n: ℕ, (OptTraces.iterated f n a).nonterminating t
 
 def accumulate_stream {ε} [Mul ε] [One ε] (es: Stream' ε): Stream' ε
   | 0 => 1
   | n + 1 => accumulate_stream es n * es n
 
-def TraceMonad.is_preinfinite_trace {ε τ α β}
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+def OptTraces.is_preinfinite_trace {ε τ α β}
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (as: Stream' α)
   : Prop
-  := ∀n: ℕ, ∃e, TraceMonad.is_trace_step f (as n) (as n.succ) e
+  := ∀n: ℕ, ∃e, OptTraces.is_trace_step f (as n) (as n.succ) e
 
-def TraceMonad.is_infinite_trace {ε τ α β}
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+def OptTraces.is_infinite_trace {ε τ α β}
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (as: Stream' α)
   (es: Stream' ε)
   : Prop
-  := ∀n: ℕ, TraceMonad.is_trace_step f (as n) (as n.succ) (es n)
+  := ∀n: ℕ, OptTraces.is_trace_step f (as n) (as n.succ) (es n)
 
-noncomputable def TraceMonad.is_preinfinite_trace.to_event_trace {ε τ α β}
-  {f: α -> TraceMonad ε τ (β ⊕ α)}
+noncomputable def OptTraces.is_preinfinite_trace.to_event_trace {ε τ α β}
+  {f: α -> OptTraces ε τ (β ⊕ α)}
   {as: Stream' α}
   (H: is_preinfinite_trace f as)
   : Stream' ε
   := λn => choose (H n)
 
-theorem TraceMonad.is_preinfinite_trace.to_infinite_trace {ε τ α β}
-  {f: α -> TraceMonad ε τ (β ⊕ α)}
+theorem OptTraces.is_preinfinite_trace.to_infinite_trace {ε τ α β}
+  {f: α -> OptTraces ε τ (β ⊕ α)}
   {as: Stream' α}
   (H: is_preinfinite_trace f as)
   : is_infinite_trace f as H.to_event_trace
   := λn => choose_spec (H n)
 
-noncomputable def TraceMonad.is_preinfinite_trace.to_effect {ε τ α β}
+noncomputable def OptTraces.is_preinfinite_trace.to_effect {ε τ α β}
   [FromTrace ε τ]
-  {f: α -> TraceMonad ε τ (β ⊕ α)}
+  {f: α -> OptTraces ε τ (β ⊕ α)}
   {as: Stream' α}
   (H: is_preinfinite_trace f as)
   : τ := FromTrace.fromTrace H.to_event_trace
 
-theorem TraceMonad.is_infinite_trace_spec {ε τ α β}
+theorem OptTraces.is_infinite_trace_spec {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (as: Stream' α)
   (es: Stream' ε)
   (H: is_infinite_trace f as es)
@@ -191,9 +191,9 @@ theorem TraceMonad.is_infinite_trace_spec {ε τ α β}
         by simp [is_infinite_trace_spec f as es H n], 
         H n, rfl⟩ 
 
-def TraceMonad.infinitely_iterated {ε τ α β}
+def OptTraces.infinitely_iterated {ε τ α β}
   [FromTrace ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
   (t: τ): Prop
   := ∃(as: Stream' α) (es: Stream' ε),
@@ -201,26 +201,26 @@ def TraceMonad.infinitely_iterated {ε τ α β}
     FromTrace.fromTrace es = t ∧ 
     is_infinite_trace f as es
 
-theorem TraceMonad.is_infinite_trace.to_infinitely_iterated {ε τ α β}
+theorem OptTraces.is_infinite_trace.to_infinitely_iterated {ε τ α β}
   [FromTrace ε τ]
-  {f: α -> TraceMonad ε τ (β ⊕ α)}
+  {f: α -> OptTraces ε τ (β ⊕ α)}
   {as: Stream' α}
   {es: Stream' ε}
   (H: is_infinite_trace f as es)
   : infinitely_iterated f (as 0) (FromTrace.fromTrace es)
   := ⟨as, es, rfl, rfl, H⟩ 
 
-theorem TraceMonad.is_preinfinite_trace.to_infinitely_iterated {ε τ α β}
+theorem OptTraces.is_preinfinite_trace.to_infinitely_iterated {ε τ α β}
   [FromTrace ε τ]
-  {f: α -> TraceMonad ε τ (β ⊕ α)}
+  {f: α -> OptTraces ε τ (β ⊕ α)}
   {as: Stream' α}
   (H: is_preinfinite_trace f as)
   : infinitely_iterated f (as 0) (H.to_effect)
   := H.to_infinite_trace.to_infinitely_iterated
 
-theorem TraceMonad.is_infinite_trace.to_infinitely_iterated' {ε τ α β}
+theorem OptTraces.is_infinite_trace.to_infinitely_iterated' {ε τ α β}
   [FromTrace ε τ]
-  {f: α -> TraceMonad ε τ (β ⊕ α)}
+  {f: α -> OptTraces ε τ (β ⊕ α)}
   {as: Stream' α}
   {es: Stream' ε}
   (H: is_infinite_trace f as es)
@@ -231,9 +231,9 @@ theorem TraceMonad.is_infinite_trace.to_infinitely_iterated' {ε τ α β}
   : infinitely_iterated f a e
   := ⟨as, es, Ha, He, H⟩ 
 
-theorem TraceMonad.is_preinfinite_trace.to_infinitely_iterated' {ε τ α β}
+theorem OptTraces.is_preinfinite_trace.to_infinitely_iterated' {ε τ α β}
   [FromTrace ε τ]
-  {f: α -> TraceMonad ε τ (β ⊕ α)}
+  {f: α -> OptTraces ε τ (β ⊕ α)}
   {as: Stream' α}
   (H: is_preinfinite_trace f as)
   (a: α)
@@ -246,15 +246,15 @@ theorem TraceMonad.is_preinfinite_trace.to_infinitely_iterated' {ε τ α β}
 def exists_nfn {α} {β: α -> Prop}: (¬∀a: α, ¬β a) -> ∃a: α, β a 
   := λk => by_contradiction (λk' => k (λa h => k' ⟨a, h⟩))
 
-noncomputable def TraceMonad.iterated_sequence_helper {ε τ α β}
+noncomputable def OptTraces.iterated_sequence_helper {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
-  (I: ∀n a' e, (TraceMonad.iterated f n a).terminating (Sum.inr a') e ->
+  (I: ∀n a' e, (OptTraces.iterated f n a).terminating (Sum.inr a') e ->
           ∃a'' e', 
-            (TraceMonad.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
-              ∧ (TraceMonad.is_trace_step f a' a'' e'))
-  : (n: ℕ) -> {p: α × ε | ∃e', (TraceMonad.iterated f n a).terminating (Sum.inr p.1) e'}
+            (OptTraces.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
+              ∧ (OptTraces.is_trace_step f a' a'' e'))
+  : (n: ℕ) -> {p: α × ε | ∃e', (OptTraces.iterated f n a).terminating (Sum.inr p.1) e'}
   | 0 => ⟨⟨a, 1⟩, 1, rfl, rfl⟩
   | n + 1 =>
     let Hv := iterated_sequence_helper f a I n;
@@ -264,47 +264,47 @@ noncomputable def TraceMonad.iterated_sequence_helper {ε τ α β}
     let HI' := choose_spec (choose_spec HI);
     ⟨⟨a'', e'⟩, _, HI'.1⟩
 
-noncomputable def TraceMonad.iterated_sequence {ε τ α β}
+noncomputable def OptTraces.iterated_sequence {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
-  (I: ∀n a' e, (TraceMonad.iterated f n a).terminating (Sum.inr a') e ->
+  (I: ∀n a' e, (OptTraces.iterated f n a).terminating (Sum.inr a') e ->
           ∃a'' e', 
-            (TraceMonad.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
-              ∧ (TraceMonad.is_trace_step f a' a'' e'))
+            (OptTraces.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
+              ∧ (OptTraces.is_trace_step f a' a'' e'))
   : Stream' α
   := λn => (iterated_sequence_helper f a I n).1.1
 
-noncomputable def TraceMonad.iterated_event_sequence {ε τ α β}
+noncomputable def OptTraces.iterated_event_sequence {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
-  (I: ∀n a' e, (TraceMonad.iterated f n a).terminating (Sum.inr a') e ->
+  (I: ∀n a' e, (OptTraces.iterated f n a).terminating (Sum.inr a') e ->
           ∃a'' e', 
-            (TraceMonad.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
-              ∧ (TraceMonad.is_trace_step f a' a'' e'))
+            (OptTraces.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
+              ∧ (OptTraces.is_trace_step f a' a'' e'))
   : Stream' ε
   := λn => (iterated_sequence_helper f a I n.succ).1.2
 
-theorem TraceMonad.iterated_sequence_zero {ε τ α β}
+theorem OptTraces.iterated_sequence_zero {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
-  (I: ∀n a' e, (TraceMonad.iterated f n a).terminating (Sum.inr a') e ->
+  (I: ∀n a' e, (OptTraces.iterated f n a).terminating (Sum.inr a') e ->
           ∃a'' e', 
-            (TraceMonad.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
-              ∧ (TraceMonad.is_trace_step f a' a'' e'))
+            (OptTraces.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
+              ∧ (OptTraces.is_trace_step f a' a'' e'))
   : (iterated_sequence f a I) 0 = a
   := rfl
 
-theorem TraceMonad.iterated_sequence_succ {ε τ α β}
+theorem OptTraces.iterated_sequence_succ {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
-  (I: ∀n a' e, (TraceMonad.iterated f n a).terminating (Sum.inr a') e ->
+  (I: ∀n a' e, (OptTraces.iterated f n a).terminating (Sum.inr a') e ->
           ∃a'' e', 
-            (TraceMonad.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
-              ∧ (TraceMonad.is_trace_step f a' a'' e'))
+            (OptTraces.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
+              ∧ (OptTraces.is_trace_step f a' a'' e'))
   (n: ℕ)
   : (iterated_sequence f a I) n.succ = 
     let Hv := iterated_sequence_helper f a I n;
@@ -312,59 +312,65 @@ theorem TraceMonad.iterated_sequence_succ {ε τ α β}
     choose HI
   := rfl
 
-theorem TraceMonad.iterated_sequence_spec {ε τ α β}
+theorem OptTraces.iterated_sequence_spec {ε τ α β}
   [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]
-  (f: α -> TraceMonad ε τ (β ⊕ α))
+  (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
-  (I: ∀n a' e, (TraceMonad.iterated f n a).terminating (Sum.inr a') e ->
+  (I: ∀n a' e, (OptTraces.iterated f n a).terminating (Sum.inr a') e ->
           ∃a'' e', 
-            (TraceMonad.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
-              ∧ (TraceMonad.is_trace_step f a' a'' e'))
+            (OptTraces.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
+              ∧ (OptTraces.is_trace_step f a' a'' e'))
   : is_infinite_trace f (iterated_sequence f a I) (iterated_event_sequence f a I)
   := λn =>
     let Hv := iterated_sequence_helper f a I n;
     let HI := I n Hv.1.1 (choose Hv.2) (choose_spec Hv.2)
     (choose_spec (choose_spec HI)).2
 
-instance {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (TraceMonad ε τ)
+instance {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (OptTraces ε τ)
   where
   dagger f a := {
-    terminating := TraceMonad.iterated_terminating f a,
+    terminating := OptTraces.iterated_terminating f a,
     nonterminating := λt => 
-      TraceMonad.iterated_nonterminating f a t ∨ 
-      TraceMonad.infinitely_iterated f a t,
-    nonempty := if p: ∃t, TraceMonad.iterated_nonterminating f a t 
-      then let ⟨t, H⟩ := p; Or.inr ⟨t, Or.inl H⟩ 
-      else if q: ∃b e, TraceMonad.iterated_terminating f a b e
-      then Or.inl q
-      else 
-        have p: ¬∃n t, (TraceMonad.iterated f n a).nonterminating t
-          := λ⟨n, t, H⟩ => p ⟨t, n, H⟩;
-        have q: ∀n c e, (TraceMonad.iterated f n a).terminating c e -> c.isRight
-          := λn c e h => match c with 
-            | Sum.inl b => (q ⟨b, e, n, h⟩).elim 
-            | Sum.inr _ => rfl
-          ;
-        have I: ∀n a' e, (TraceMonad.iterated f n a).terminating (Sum.inr a') e ->
-          ∃a'' e', 
-            (TraceMonad.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
-              ∧ (TraceMonad.is_trace_step f a' a'' e')
-          := λn a' e H => 
-            match (f a').nonempty with
-            | Or.inl ⟨Sum.inl b, e', Hae⟩ => 
-              have ca := q n.succ (Sum.inl b) (e * e') 
-                ⟨Sum.inr a', e, e', H, Hae, rfl⟩;
-              by contradiction
-            | Or.inl ⟨Sum.inr a'', e', Hae⟩ => ⟨a'', 
-              e', 
-              (TraceMonad.iterated_terminating_succ_inr f n a a'' _).mpr 
-                ⟨a', e, e', H, Hae, rfl⟩,
-              Hae⟩ 
-            | Or.inr ⟨t, Ht⟩ => 
-              (p ⟨n.succ, e • t, 
-                (TraceMonad.iterated_nonterminating_succ' f n a _).mpr
-                  (Or.inr ⟨a', e, t, H, Ht, rfl⟩)
-              ⟩).elim
-          ;
-        Or.inr ⟨_, Or.inr (TraceMonad.iterated_sequence_spec f a I).to_infinitely_iterated⟩ 
+      OptTraces.iterated_nonterminating f a t ∨ 
+      OptTraces.infinitely_iterated f a t
   }
+
+theorem OptTraces.dagger_nonempty {ε τ α β} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ] 
+  (f: α -> OptTraces ε τ (β ⊕ α))
+  (Hf: ∀a, (f a).is_nonempty)
+  (a: α)
+  : (DaggerMonad.dagger f a).is_nonempty
+  := if p: ∃t, OptTraces.iterated_nonterminating f a t 
+  then let ⟨t, H⟩ := p; Or.inr ⟨t, Or.inl H⟩ 
+  else if q: ∃b e, OptTraces.iterated_terminating f a b e
+  then Or.inl q
+  else 
+    have p: ¬∃n t, (OptTraces.iterated f n a).nonterminating t
+      := λ⟨n, t, H⟩ => p ⟨t, n, H⟩;
+    have q: ∀n c e, (OptTraces.iterated f n a).terminating c e -> c.isRight
+      := λn c e h => match c with 
+        | Sum.inl b => (q ⟨b, e, n, h⟩).elim 
+        | Sum.inr _ => rfl
+      ;
+    have I: ∀n a' e, (OptTraces.iterated f n a).terminating (Sum.inr a') e ->
+      ∃a'' e', 
+        (OptTraces.iterated f n.succ a).terminating (Sum.inr a'') (e * e') 
+          ∧ (OptTraces.is_trace_step f a' a'' e')
+      := λn a' e H => 
+        match (Hf a') with
+        | Or.inl ⟨Sum.inl b, e', Hae⟩ => 
+          have ca := q n.succ (Sum.inl b) (e * e') 
+            ⟨Sum.inr a', e, e', H, Hae, rfl⟩;
+          by contradiction
+        | Or.inl ⟨Sum.inr a'', e', Hae⟩ => ⟨a'', 
+          e', 
+          (OptTraces.iterated_terminating_succ_inr f n a a'' _).mpr 
+            ⟨a', e, e', H, Hae, rfl⟩,
+          Hae⟩ 
+        | Or.inr ⟨t, Ht⟩ => 
+          (p ⟨n.succ, e • t, 
+            (OptTraces.iterated_nonterminating_succ' f n a _).mpr
+              (Or.inr ⟨a', e, t, H, Ht, rfl⟩)
+          ⟩).elim
+      ;
+    Or.inr ⟨_, Or.inr (OptTraces.iterated_sequence_spec f a I).to_infinitely_iterated⟩ 

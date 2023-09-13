@@ -2,20 +2,21 @@ import Mathlib.Algebra.Group.Defs
 import Mathlib.GroupTheory.GroupAction.Defs
 import Mathlib.Data.Set.Image
 
-structure TraceMonad (ε: Type u1) (τ: Type u2) (α: Type u3): Type (max u1 (max u2 u3)) where
+structure OptTraces (ε: Type u1) (τ: Type u2) (α: Type u3): Type (max u1 (max u2 u3)) where
   terminating: α -> ε -> Prop
   nonterminating: τ -> Prop
-  nonempty: (∃a e, terminating a e) ∨ (∃t, nonterminating t)
 
-theorem TraceMonad.mk.injEq' {ε τ α} (t t': TraceMonad ε τ α)
+def OptTraces.is_nonempty {ε τ α} (t: OptTraces ε τ α) := (∃a e, t.terminating a e) ∨ (∃e, t.nonterminating e)
+
+theorem OptTraces.mk.injEq' {ε τ α} (t t': OptTraces ε τ α)
   : t.terminating = t'.terminating ∧ t.nonterminating = t'.nonterminating ↔ t = t'
   := by cases t; cases t'; simp
 
-theorem TraceMonad.mk.injEq_mp {ε τ α} (t t': TraceMonad ε τ α)
+theorem OptTraces.mk.injEq_mp {ε τ α} (t t': OptTraces ε τ α)
   : t.terminating = t'.terminating ∧ t.nonterminating = t'.nonterminating -> t = t'
   := by cases t; cases t'; simp
 
-instance {ε τ α}: PartialOrder (TraceMonad ε τ α) where
+instance {ε τ α}: PartialOrder (OptTraces ε τ α) where
   le t t' := t.terminating ≤ t'.terminating ∧ t.nonterminating ≤ t'.nonterminating 
   le_refl t := ⟨le_refl _, le_refl _⟩
   le_trans a b c Hab Hbc := ⟨le_trans Hab.1 Hbc.1, le_trans Hab.2 Hbc.2⟩ 
@@ -33,62 +34,76 @@ instance {ε} [Monoid ε]: MulAction ε Terminates where
   one_smul := λt => match t with .
   mul_smul := λ_ _ t => match t with .
 
-def TraceMonad.map_terminating {ε τ α ε'} (f: ε -> ε') (t: TraceMonad ε τ α)
-  : TraceMonad ε' τ α where
+def OptTraces.map_terminating {ε τ α ε'} (f: ε -> ε') (t: OptTraces ε τ α)
+  : OptTraces ε' τ α where
   terminating a := f '' (t.terminating a)
   nonterminating := t.nonterminating
-  nonempty := match t.nonempty with
-    | Or.inl ⟨a, e, H⟩ => Or.inl ⟨a, f e, e, H, rfl⟩ 
-    | Or.inr H => Or.inr H
 
-theorem TraceMonad.map_terminating_id {ε τ α}
-  : (t: TraceMonad α ε τ) -> t.map_terminating id = t
-  | ⟨tt, tl, tne⟩ => by simp [map_terminating]
+theorem OptTraces.map_terminating_nonempty {ε τ α ε'} (f: ε -> ε') (t: OptTraces ε τ α)
+  : t.is_nonempty -> (t.map_terminating f).is_nonempty
+  | Or.inl ⟨a, e, H⟩ => Or.inl ⟨a, f e, e, H, rfl⟩
+  | Or.inr H => Or.inr H
 
-def TraceMonad.map_nonterminating {ε τ α τ'} (f: τ -> τ') (t: TraceMonad ε τ α)
-  : TraceMonad ε τ' α where
+theorem OptTraces.map_terminating_id {ε τ α}
+  : (t: OptTraces α ε τ) -> t.map_terminating id = t
+  | ⟨tt, tl⟩ => by simp [map_terminating]
+
+def OptTraces.map_nonterminating {ε τ α τ'} (f: τ -> τ') (t: OptTraces ε τ α)
+  : OptTraces ε τ' α where
   terminating := t.terminating
   nonterminating := f '' t.nonterminating
-  nonempty := match t.nonempty with
-    | Or.inl H => Or.inl H
-    | Or.inr ⟨t, H⟩ => Or.inr ⟨f t, t, H, rfl⟩
 
-theorem TraceMonad.map_nonterminating_id {α ε τ}
-  : (t: TraceMonad α ε τ) -> t.map_nonterminating id = t
-  | ⟨tt, tl, tne⟩ => by simp [map_nonterminating]
+theorem OptTraces.map_nonterminating_nonempty {ε τ α τ'} (f: τ -> τ') (t: OptTraces ε τ α)
+  : t.is_nonempty -> (t.map_nonterminating f).is_nonempty
+  | Or.inl H => Or.inl H
+  | Or.inr ⟨t, H⟩ => Or.inr ⟨f t, t, H, rfl⟩
 
-def TraceMonad.map' {ε τ α β} (f: α -> β) (x: TraceMonad ε τ α): TraceMonad ε τ β where
+theorem OptTraces.map_nonterminating_id {α ε τ}
+  : (t: OptTraces α ε τ) -> t.map_nonterminating id = t
+  | ⟨tt, tl⟩ => by simp [map_nonterminating]
+
+def OptTraces.map' {ε τ α β} (f: α -> β) (x: OptTraces ε τ α): OptTraces ε τ β where
   terminating b e := ∃a, x.terminating a e ∧ b = f a
   nonterminating := x.nonterminating
-  nonempty := match x.nonempty with
-    | Or.inl ⟨a, e, H⟩ => Or.inl ⟨f a, e, a, H, rfl⟩ 
-    | Or.inr H => Or.inr H
 
-def TraceMonad.pure' {α} (ε τ) [Mul ε] [One ε] (a: α): TraceMonad ε τ α where
+theorem OptTraces.map_nonempty {ε τ α β} (f: α -> β) (t: OptTraces ε τ α)
+  : t.is_nonempty -> (t.map' f).is_nonempty
+  | Or.inl ⟨a, e, H⟩ => Or.inl ⟨f a, e, a, H, rfl⟩ 
+  | Or.inr H => Or.inr H
+
+def OptTraces.pure' {α} (ε τ) [One ε] (a: α): OptTraces ε τ α where
   terminating a' e := a = a' ∧ e = 1
   nonterminating _ := False
-  nonempty := Or.inl ⟨a, 1, rfl, rfl⟩
 
-def TraceMonad.bind' {ε τ α β} [Mul ε] [One ε] [SMul ε τ] (x: TraceMonad ε τ α) (f: α -> TraceMonad ε τ β)
-  : TraceMonad ε τ β where
+theorem OptTraces.pure_nonempty' (ε τ) [One ε] (a: α)
+  : (OptTraces.pure' ε τ a).is_nonempty
+  := Or.inl ⟨a, 1, rfl, rfl⟩
+
+def OptTraces.bind' {ε τ α β} [Mul ε] [One ε] [SMul ε τ] (x: OptTraces ε τ α) (f: α -> OptTraces ε τ β)
+  : OptTraces ε τ β where
   terminating := λb e'' => ∃a e e', x.terminating a e ∧ (f a).terminating b e' ∧ e'' = e * e'
   nonterminating := λt' => 
     x.nonterminating t' ∨ 
     ∃a e t, x.terminating a e ∧ (f a).nonterminating t ∧ t' = e • t
-  nonempty := match x.nonempty with
-    | Or.inl ⟨a, e, Hae⟩ => match (f a).nonempty with
-      | Or.inl ⟨b, e', H⟩ => Or.inl ⟨b, e * e', a, e, e', Hae, H, rfl⟩ 
-      | Or.inr ⟨t, H⟩ => Or.inr ⟨e • t, Or.inr ⟨a, e, t, Hae, H, rfl⟩⟩  
-    | Or.inr ⟨t, H⟩ => Or.inr ⟨t, Or.inl H⟩ 
 
-instance {ε τ} [Mul ε] [One ε] [SMul ε τ]: Monad (TraceMonad ε τ) where
-  pure := TraceMonad.pure' _ _
-  bind := TraceMonad.bind' --TODO: why does stuff fail to infer without this?
+theorem OptTraces.bind_nonempty {ε τ α β} [Mul ε] [One ε] [SMul ε τ] (x: OptTraces ε τ α) (f: α -> OptTraces ε τ β)
+  (Hx: x.is_nonempty)
+  (Hf: ∀a, (f a).is_nonempty)
+  : (x.bind' f).is_nonempty :=
+  match Hx with
+  | Or.inl ⟨a, e, Hae⟩ => match (Hf a) with
+    | Or.inl ⟨b, e', H⟩ => Or.inl ⟨b, e * e', a, e, e', Hae, H, rfl⟩ 
+    | Or.inr ⟨t, H⟩ => Or.inr ⟨e • t, Or.inr ⟨a, e, t, Hae, H, rfl⟩⟩  
+  | Or.inr ⟨t, H⟩ => Or.inr ⟨t, Or.inl H⟩
 
-instance {ε τ} [M: Monoid ε] [A: MulAction ε τ]: LawfulMonad (TraceMonad ε τ) :=
-  LawfulMonad.mk' (TraceMonad ε τ) 
-    (λ⟨xt, xl, _xne⟩ => by
-      apply TraceMonad.mk.injEq_mp
+instance {ε τ} [Mul ε] [One ε] [SMul ε τ]: Monad (OptTraces ε τ) where
+  pure := OptTraces.pure' _ _
+  bind := OptTraces.bind' --TODO: why does stuff fail to infer without this?
+
+instance {ε τ} [M: Monoid ε] [A: MulAction ε τ]: LawfulMonad (OptTraces ε τ) :=
+  LawfulMonad.mk' (OptTraces ε τ) 
+    (λ⟨xt, xl⟩ => by
+      apply OptTraces.mk.injEq_mp
       constructor
       . funext b e''
         exact propext ⟨
@@ -102,7 +117,7 @@ instance {ε τ} [M: Monoid ε] [A: MulAction ε τ]: LawfulMonad (TraceMonad ε
         ⟩ 
     ) 
     (λx f => by
-      apply TraceMonad.mk.injEq_mp
+      apply OptTraces.mk.injEq_mp
       constructor
       . funext b e''
         exact propext ⟨
@@ -115,8 +130,8 @@ instance {ε τ} [M: Monoid ε] [A: MulAction ε τ]: LawfulMonad (TraceMonad ε
           λH => Or.inr ⟨x, 1, t', ⟨rfl, rfl⟩, H, (A.one_smul _).symm⟩ 
         ⟩
     ) 
-    (λ⟨xt, xl, _xne⟩ f g => by
-      apply TraceMonad.mk.injEq_mp
+    (λ⟨xt, xl⟩ f g => by
+      apply OptTraces.mk.injEq_mp
       constructor
       . funext d e'
         exact propext ⟨
