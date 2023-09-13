@@ -10,4 +10,5 @@ import Enrichment.Runtime.Association
 import Enrichment.Runtime.PreIsotopy
 import Enrichment.TraceMonad.Basic
 import Enrichment.TraceMonad.Elgot
+import Enrichment.TraceMonad.BufferMonoid
 import Enrichment.Elgot.Monad
