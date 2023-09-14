@@ -32,7 +32,7 @@ theorem OptTraces.iterated_terminating_zero {ε τ α β}
   (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
   (c e)
-  : (iterated f 0 a).terminating c e ↔ (Sum.inr a = c ∧ e = 1)
+  : (iterated f 0 a).terminating c e ↔ (c = Sum.inr a ∧ e = 1)
   := by rfl
 
 theorem OptTraces.iterated_nonterminating_zero {ε τ α β}
@@ -76,7 +76,7 @@ theorem OptTraces.iterated_terminating_succ' {ε τ α β}
   (a: α)
   (c e)
   : (iterated f n.succ a).terminating c e ↔
-    ((∃b, (iterated f n a).terminating (Sum.inl b) e ∧ Sum.inl b = c) ∨ (∃a' e' e'', 
+    ((∃b, (iterated f n a).terminating (Sum.inl b) e ∧ c = Sum.inl b) ∨ (∃a' e' e'', 
       (iterated f n a).terminating (Sum.inr a') e' ∧ 
         (f a').terminating c e'' ∧ e = e' * e''))
   := ⟨
