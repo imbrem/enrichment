@@ -8,6 +8,8 @@ import Enrichment.Effectful.Braided
 import Enrichment.Runtime.Diagram
 import Enrichment.Runtime.Association
 import Enrichment.Runtime.PreIsotopy
-import Enrichment.TraceMonad.Basic
-import Enrichment.TraceMonad.Elgot
 import Enrichment.Elgot.Monad
+import Enrichment.TraceMonad.Basic
+import Enrichment.TraceMonad.TraceAction
+import Enrichment.TraceMonad.Factored.Basic
+import Enrichment.TraceMonad.Factored.Elgot
