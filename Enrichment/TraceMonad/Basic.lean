@@ -6,11 +6,11 @@ inductive Trace (ε: Type u1) (τ: Type u2) (α: Type u3): Type (max u1 (max u2 
   | terminating (a: α) (e: ε)
   | nonterminating (t: τ)
 
-def Trace.before {ε τ α} [Mul ε] [SMul ε τ] (e: ε): Trace ε τ α -> Trace ε τ α
+def Trace.prepend {ε τ α} [Mul ε] [SMul ε τ] (e: ε): Trace ε τ α -> Trace ε τ α
   | terminating a e' => terminating a (e * e')
   | nonterminating t => nonterminating (e • t)
 
-def Trace.after {ε τ α} [Mul ε] [SMul ε τ] (e: ε): Trace ε τ α -> Trace ε τ α
+def Trace.append {ε τ α} [Mul ε] [SMul ε τ] (e: ε): Trace ε τ α -> Trace ε τ α
   | terminating a e' => terminating a (e' * e)
   | nonterminating t => nonterminating t
 
@@ -41,4 +41,36 @@ instance Trace.instMonad {ε τ} [Mul ε] [One ε] [SMul ε τ]: Monad (Trace ε
   pure := Trace.pure' _ _
   bind := Trace.bind'
 
---TODO: Trace lawful monad
+def Trace.seqLeft' {ε τ α β} [Mul ε] [One ε] [SMul ε τ]: Trace ε τ α -> Trace ε τ β -> Trace ε τ α
+  | terminating a e, terminating _ e' => terminating a (e * e')
+  | nonterminating t, _ => nonterminating t
+  | terminating _ e, nonterminating t => nonterminating (e • t)
+
+def Trace.seqRight' {ε τ α β} [Mul ε] [One ε] [SMul ε τ]: Trace ε τ α -> Trace ε τ β -> Trace ε τ β
+  | terminating _ e, terminating b e' => terminating b (e * e')
+  | nonterminating t, _ => nonterminating t
+  | terminating _ e, nonterminating t => nonterminating (e • t)
+
+theorem Trace.seqLeft_spec {ε τ α β} [Monoid ε] [SMul ε τ] 
+  (l: Trace ε τ α) (r: Trace ε τ β)
+  : l <* r = l.seqLeft' r
+  := by cases l <;> cases r <;> simp [SeqLeft.seqLeft, bind', seqLeft', pure']
+
+theorem Trace.seqRight_spec {ε τ α β} [Monoid ε] [SMul ε τ] 
+  (l: Trace ε τ α) (r: Trace ε τ β)
+  : l <* r = l.seqLeft' r
+  := by cases l <;> cases r <;> simp [SeqLeft.seqLeft, bind', seqLeft', pure']
+
+instance Trace.instLawfulMonad {ε τ} [M: Monoid ε] [MulAction ε τ]: LawfulMonad (Trace ε τ) 
+  := LawfulMonad.mk' _ 
+    (λx => by cases x <;> simp [Functor.map, bind', pure']) 
+    (λx f => by simp only [bind, bind', pure, pure']; split <;> simp [*])
+    (λx f g => by 
+      cases x <;> simp only [bind, bind']
+      case terminating a e => 
+        generalize Hy: f a = y;
+        cases y <;> simp only []
+        case terminating b e' => 
+          generalize Hz: g b = z;
+          cases z <;> simp [MulAction.mul_smul, M.mul_assoc]
+    )
