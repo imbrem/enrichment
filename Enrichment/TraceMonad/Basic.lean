@@ -1,6 +1,7 @@
 import Mathlib.Algebra.Group.Defs
 import Mathlib.GroupTheory.GroupAction.Defs
 import Mathlib.Data.Set.Image
+import Mathlib.Data.Set.Lattice
 
 inductive Trace (ε: Type u1) (τ: Type u2) (α: Type u3): Type (max u1 (max u2 u3))
   | terminating (a: α) (e: ε)
@@ -74,3 +75,45 @@ instance Trace.instLawfulMonad {ε τ} [M: Monoid ε] [MulAction ε τ]: LawfulM
           generalize Hz: g b = z;
           cases z <;> simp [MulAction.mul_smul, M.mul_assoc]
     )
+
+def OptTraces (ε τ α) := Set (Trace ε τ α)
+
+instance OptTraces.instEmptyCollection {ε τ α}: EmptyCollection (OptTraces ε τ α)
+  := Set.instEmptyCollectionSet
+
+instance OptTraces.instSingleton {ε τ α}: Singleton (Trace ε τ α) (OptTraces ε τ α)
+  := Set.instSingletonSet
+
+instance OptTraces.instMembership {ε τ α}: Membership (Trace ε τ α) (OptTraces ε τ α)
+  := Set.instMembershipSet
+
+def OptTraces.Nonempty {ε τ α}: OptTraces ε τ α -> Prop := Set.Nonempty
+
+def OptTraces.prepend {ε τ α} [Mul ε] [SMul ε τ] (e: ε) (t: OptTraces ε τ α): OptTraces ε τ α
+  := Set.image (Trace.prepend e) t
+
+def OptTraces.append {ε τ α} [Mul ε] [SMul ε τ] (e: ε) (t: OptTraces ε τ α): OptTraces ε τ α
+  := Set.image (Trace.append e) t
+
+def OptTraces.pure' {α} (ε τ) [One ε] (a: α): OptTraces ε τ α 
+  := { Trace.pure' ε τ a }
+
+def Trace.bind_opt {ε τ α β} [Mul ε] [One ε] [SMul ε τ] (x: Trace ε τ α) (f: α -> OptTraces ε τ β)
+  : OptTraces ε τ β
+  := match x with 
+    | Trace.terminating a e => (f a).prepend e 
+    | Trace.nonterminating t => { Trace.nonterminating t }
+
+def OptTraces.bind' {ε τ α β} [Mul ε] [One ε] [SMul ε τ] (xs: OptTraces ε τ α) (f: α -> OptTraces ε τ β)
+  : OptTraces ε τ β
+  := ⋃ x ∈ xs, x.bind_opt f
+
+instance OptTraces.instMonad {ε τ} [Mul ε] [One ε] [SMul ε τ]: Monad (OptTraces ε τ) where
+  pure := OptTraces.pure' _ _
+  bind := OptTraces.bind'
+
+--TODO: lawful monad
+
+--TODO: traces
+
+--TODO: traces lawful monad
