@@ -10,8 +10,10 @@ import Enrichment.Runtime.Association
 import Enrichment.Runtime.PreIsotopy
 import Enrichment.Elgot.Monad
 import Enrichment.Elgot.State
+import Enrichment.OrderedMonoid.Basic
 import Enrichment.TraceMonad.Basic
 import Enrichment.TraceMonad.Elgot
 import Enrichment.TraceMonad.TraceAction
 import Enrichment.TraceMonad.Factored.Basic
 import Enrichment.TraceMonad.Factored.Elgot
+import Enrichment.TraceMonad.Lower.Basic
