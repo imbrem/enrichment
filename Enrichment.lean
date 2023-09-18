@@ -9,6 +9,7 @@ import Enrichment.Runtime.Diagram
 import Enrichment.Runtime.Association
 import Enrichment.Runtime.PreIsotopy
 import Enrichment.Elgot.Monad
+import Enrichment.Elgot.State
 import Enrichment.TraceMonad.Basic
 import Enrichment.TraceMonad.TraceAction
 import Enrichment.TraceMonad.Factored.Basic
