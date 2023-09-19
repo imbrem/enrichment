@@ -5,6 +5,7 @@ import Mathlib.Data.Set.Image
 import Mathlib.Data.Set.Lattice
 
 import Enrichment.InvlessMonoid.Basic
+import Enrichment.OrderedMonoid.Basic
 
 structure Buffer {α ε} [Monoid α] [Monoid ε] (φ: MonoidHom α ε) where
   state: ε
@@ -18,7 +19,6 @@ def Buffer.flushed {α ε} [Monoid α] [Monoid ε] {φ: MonoidHom α ε} (b: Buf
   state := b.flush
   buffer := 1
 
---TODO: instOrderedMonoid
 instance Buffer.instPartialOrder {α: Type u} {ε: Type v} [ma: InvlessMonoid α] [me: Monoid ε] {φ: MonoidHom α ε}
   : PartialOrder (Buffer φ) where
   le l h := ∃a: α, l.state = h.state * (φ a) ∧ h.buffer = a * l.buffer
@@ -44,3 +44,22 @@ instance Buffer.instPartialOrder {α: Type u} {ε: Type v} [ma: InvlessMonoid α
         := ma.mul_id_left _ _ (ma.mul_right_cancel _ _ _ p)
       simp [p] at Hxy
       exact ⟨Hxy.1, Hxy.2.symm⟩ 
+
+instance Buffer.instMonoid {α: Type u} {ε: Type v} [ma: Monoid α] [me: Monoid ε] {φ: MonoidHom α ε}
+  : Monoid (Buffer φ) where
+  mul l r := { state := l.state * r.state, buffer := l.buffer * r.buffer }
+  mul_assoc a b c := by
+    cases a; cases b; cases c
+    simp only [HMul.hMul, mk.injEq]
+    exact ⟨me.mul_assoc _ _ _, ma.mul_assoc _ _ _⟩  
+  one := { state := 1, buffer := 1 }
+  one_mul a := by 
+    cases a; 
+    simp only [HMul.hMul, mk.injEq]; 
+    exact ⟨me.one_mul _, ma.one_mul _⟩
+  mul_one a := by 
+    cases a; 
+    simp only [HMul.hMul, mk.injEq]; 
+    exact ⟨me.mul_one _, ma.mul_one _⟩
+
+-- NOT: an ordered monoid in general!
