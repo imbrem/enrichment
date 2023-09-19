@@ -39,6 +39,9 @@ def sub_id {α} [One α] [PartialOrder α]: LowerSet α where
   carrier := λx => x ≤ 1 
   lower' := λ_ _ Hab H => Hab.trans H
 
+theorem sub_id_spec {α} [H: One α] [O: PartialOrder α]: 1 ∈ @sub_id α H O
+  := O.le_refl 1
+
 class LowerMonoid (α) [Monoid α] [PartialOrder α] where
   sub_id_lower_binary_product: ∀(m: LowerSet α), lower_binary_product sub_id m = m
   lower_binary_product_sub_id: ∀(m: LowerSet α), lower_binary_product m sub_id = m
