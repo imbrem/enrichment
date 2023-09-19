@@ -35,30 +35,30 @@ def lower_binary_product_spec {α} [Mul α] [PartialOrder α] (ls rs: LowerSet �
     λ⟨_, ⟨l, Hl, r, Hr, rfl⟩, Hx⟩ => ⟨l, Hl, r, Hr, Hx⟩ 
   ⟩))
 
-def sub_id {α} [OrderedMonoid α]: LowerSet α where 
+def sub_id {α} [One α] [PartialOrder α]: LowerSet α where 
   carrier := λx => x ≤ 1 
   lower' := λ_ _ Hab H => Hab.trans H
 
-def sub_id_lower_binary_product {α} [M: OrderedMonoid α] (m: LowerSet α)
-  : lower_binary_product sub_id m = m
-  := LowerSet.ext (Set.ext (λx => ⟨
+class LowerMonoid (α) [Monoid α] [PartialOrder α] where
+  sub_id_lower_binary_product: ∀(m: LowerSet α), lower_binary_product sub_id m = m
+  lower_binary_product_sub_id: ∀(m: LowerSet α), lower_binary_product m sub_id = m
+  lower_binary_product_assoc: ∀(a b c: LowerSet α), 
+    lower_binary_product (lower_binary_product a b) c 
+    = lower_binary_product a (lower_binary_product b c)
+
+instance OrderedMonoid.instLowerMonoid {α} [M: OrderedMonoid α]
+  : LowerMonoid α where
+  sub_id_lower_binary_product m := LowerSet.ext (Set.ext (λx => ⟨
     λ⟨l, Hl, r, Hr, Hx⟩ => 
       m.lower' ((Hx.trans (M.mul_le_mul_right _ _ Hl _)).trans (le_of_eq (M.one_mul r))) Hr,
     λH => ⟨1, M.le_refl 1, x, H, by simp⟩ 
   ⟩))
-
-def lower_binary_product_sub_id {α} [M: OrderedMonoid α] (m: LowerSet α)
-  : lower_binary_product m sub_id = m
-  := LowerSet.ext (Set.ext (λx => ⟨
+  lower_binary_product_sub_id m := LowerSet.ext (Set.ext (λx => ⟨
     λ⟨l, Hl, r, Hr, Hx⟩ => 
       m.lower' ((Hx.trans (M.mul_le_mul_left _ _ Hr _)).trans (le_of_eq (M.mul_one l))) Hl,
     λH => ⟨x, H, 1, M.le_refl 1, by simp⟩ 
   ⟩))
-
-def lower_binary_product_assoc {α} [M: OrderedMonoid α] (a b c: LowerSet α)
-  : lower_binary_product (lower_binary_product a b) c 
-  = lower_binary_product a (lower_binary_product b c)
-  := LowerSet.ext (Set.ext (λx => ⟨
+  lower_binary_product_assoc a b c := LowerSet.ext (Set.ext (λx => ⟨
     λ⟨l, ⟨il, Hil, ir, Hir, Hlr⟩, r, Hr, Hx⟩ => ⟨il, Hil, ir * r, ⟨ir, Hir, r, Hr, le_refl _⟩, 
       by
         apply le_trans Hx
@@ -75,9 +75,9 @@ def lower_binary_product_assoc {α} [M: OrderedMonoid α] (a b c: LowerSet α)
     ⟩
   ⟩))
 
-instance lower_binary_product_monoid {α} [OrderedMonoid α]: Monoid (LowerSet α) where
+instance LowerMonoid.instMonoidLowerSet {α} [Monoid α] [PartialOrder α] [M: LowerMonoid α]: Monoid (LowerSet α) where
   mul := lower_binary_product
-  mul_assoc := lower_binary_product_assoc
+  mul_assoc := M.lower_binary_product_assoc
   one := sub_id
-  one_mul := sub_id_lower_binary_product
-  mul_one := lower_binary_product_sub_id
+  one_mul := M.sub_id_lower_binary_product
+  mul_one := M.lower_binary_product_sub_id
