@@ -113,8 +113,19 @@ instance stateElgotMonad {σ} {m: Type u -> Type v} [Monad m] [LawfulMonad m] [e
       <-kleisli_assoc,
       destate_sum_inr,
       destate_inl_dist_fn,
-      <-ElgotMonad.naturality,
+      <-e.naturality,
       kleisli_assoc
     ]
-  codiagonal := sorry
-  uniformity := sorry
+  codiagonal f := by
+    apply destate_inj
+    rw [
+      destate_state_dagger,
+      destate_state_dagger,
+      destate_state_dagger,
+    ]
+    sorry
+  uniformity f g h H := by
+    apply destate_inj
+    rw [destate_kleisli]
+    apply e.uniformity
+    sorry
