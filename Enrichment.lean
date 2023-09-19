@@ -10,6 +10,7 @@ import Enrichment.Runtime.Association
 import Enrichment.Runtime.PreIsotopy
 import Enrichment.Elgot.Monad
 import Enrichment.Elgot.State
+import Enrichment.InvlessMonoid.Basic
 import Enrichment.OrderedMonoid.Basic
 import Enrichment.OrderedMonoid.Buffer
 import Enrichment.TraceMonad.Basic
