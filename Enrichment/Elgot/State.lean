@@ -37,6 +37,13 @@ def dist_fn {σ β γ}: (β ⊕ γ) × σ -> (β × σ) ⊕ (γ × σ)
   | (Sum.inl b, s) => Sum.inl (b, s) 
   | (Sum.inr c, s) => Sum.inr (c, s)
 
+theorem dist_fn_inl {σ β γ} (b s)
+  : @dist_fn σ β γ (Sum.inl b, s) = Sum.inl (b, s)
+  := rfl
+theorem dist_fn_inr {σ β γ} (c s)
+  : @dist_fn σ β γ (Sum.inr c, s) = Sum.inr (c, s)
+  := rfl
+
 def destate_sum {σ: Type u} {m: Type u -> Type v} {α β γ: Type u} [Monad m]
   (f: α -> StateT σ m γ) (g: β -> StateT σ m γ)
   : destate (Sum.elim f g) = (Sum.elim (destate f) (destate g)) ∘ dist_fn
@@ -169,4 +176,33 @@ instance stateElgotMonad {σ} {m: Type u -> Type v} [Monad m] [LawfulMonad m] [e
     apply destate_inj
     rw [destate_kleisli]
     apply e.uniformity
-    sorry
+    rw [
+      kleisli_assoc (destate h) (destate f),
+      <-destate_kleisli h f,
+      <-H,
+      destate_kleisli,
+      <-kleisli_assoc,
+      <-kleisli_assoc
+    ]
+    apply congr rfl;
+    funext ⟨c, s⟩
+    cases c with
+    | inl b => simp [pure, StateT.pure, dist_fn, kleisli_comp_app, destate]
+    | inr c => 
+      rw [
+        Bind.kleisliRight,
+        Function.comp_apply,
+        pure_bind,
+        dist_fn_inr,
+        Sum.elim_inr,
+        Bind.kleisliRight,
+        destate,
+        Bind.kleisliRight,
+        destate,
+        Sum.elim_inr,
+        kleisli_comp_app
+      ]
+      simp only [bind, StateT.bind, pure, StateT.pure, bind_assoc]
+      apply congr rfl
+      funext ⟨a, s⟩
+      simp [dist_fn]
