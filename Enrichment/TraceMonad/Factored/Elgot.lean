@@ -524,7 +524,6 @@ instance OptTraces.instElgotMonad {ε τ} [Monoid ε] [MulAction ε τ] [TraceAc
       . intro H
         match H with
         | Or.inl Hstep => exact Or.inl ⟨1, Or.inr ⟨Sum.inr a, 1, t, ⟨rfl, rfl⟩, Hstep, by simp⟩⟩
-        | Or.inr ⟨Sum.inl b, e, t', Hstep, Hiter, He⟩ => exact Hiter.elim
         | Or.inr ⟨Sum.inr a', e, t', Hstep, Or.inl ⟨n, Hiter⟩, He⟩ => 
           exact Or.inl ⟨n.succ, by 
             rw [<-iterated_back_spec]
@@ -534,13 +533,28 @@ instance OptTraces.instElgotMonad {ε τ} [Monoid ε] [MulAction ε τ] [TraceAc
             ⟩ 
         | Or.inr ⟨Sum.inr a', e, t', Hstep, Or.inr ⟨as, es, Has, Hes, Hiter⟩, He⟩ => 
           exact Or.inr ⟨as.cons a, es.cons e, rfl, 
-            by rw [<-TraceAction.fromTrace_assoc, Hes, He], 
+            by rw [<-TraceAction.fromTrace_assoc', Hes, He], 
             λ
             |0 => by
               simp only [Stream'.cons, Has]
               exact Hstep
             |n + 1 => Hiter n⟩
-      . sorry
+      . intro H
+        match H with
+        | Or.inl ⟨0, H⟩ => simp [iterated, pure, pure'] at H
+        | Or.inl ⟨n + 1, H⟩ => 
+          rw [<-iterated_back_spec, iterated_back] at H;
+          match H with
+          | Or.inl Hstep => exact Or.inl Hstep
+          | Or.inr ⟨Sum.inr a', e, t', Hstep, Hiter, He⟩ => 
+            exact Or.inr ⟨Sum.inr a', e, t', Hstep, Or.inl ⟨n, by rw [<-iterated_back_spec]; exact Hiter⟩, He⟩
+        | Or.inr ⟨as, es, Has, Hes, Hiter⟩ => 
+          exact Or.inr ⟨
+            Sum.inr (as 1), es 0, FromTrace.fromTrace es.tail, 
+            Has ▸ Hiter 0, 
+            Or.inr ⟨as.tail, es.tail, rfl, rfl, λn => Hiter n.succ⟩,
+            by rw [<-TraceAction.fromTrace_assoc, Hes]
+          ⟩ 
   naturality f g := sorry
   codiagonal f := sorry
   uniformity f g h := sorry
