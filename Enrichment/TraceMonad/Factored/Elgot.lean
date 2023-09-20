@@ -418,6 +418,12 @@ instance {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (
       OptTraces.infinitely_iterated f a t
   }
 
+theorem dagger_terminating {ε τ α β} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]
+  (f: α -> OptTraces ε τ (β ⊕ α))
+  (a: α)
+  : (DaggerMonad.dagger f a).terminating = OptTraces.iterated_terminating f a
+  := rfl
+
 theorem OptTraces.dagger_nonempty {ε τ α β} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ] 
   (f: α -> OptTraces ε τ (β ⊕ α))
   (Hf: ∀a, (f a).is_nonempty)
