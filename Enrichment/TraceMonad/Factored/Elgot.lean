@@ -1,6 +1,7 @@
 import Enrichment.TraceMonad.Factored.Basic
 import Enrichment.TraceMonad.TraceAction
 import Enrichment.Elgot.Monad
+import Enrichment.Elgot.State
 import Mathlib.Data.Stream.Defs
 open Classical
 
@@ -9,7 +10,97 @@ def OptTraces.iterated {ε τ α β}
   (f: α -> OptTraces ε τ (β ⊕ α))
   : ℕ -> α-> OptTraces ε τ (β ⊕ α)
   | 0, a => pure (Sum.inr a)
-  | n + 1, a => (OptTraces.iterated f n a) >>= Sum.elim (pure ∘ Sum.inl) f
+  | n + 1, a => (iterated f n a) >>= Sum.elim (pure ∘ Sum.inl) f
+
+def OptTraces.iterated_kleisli {ε τ α β} 
+  [Mul ε] [One ε] [SMul ε τ]
+  (f: α -> OptTraces ε τ (β ⊕ α))
+  : ℕ -> α -> OptTraces ε τ (β ⊕ α)
+  | 0 => pure ∘ Sum.inr 
+  | n + 1 => (iterated_kleisli f n) >=> Sum.elim (pure ∘ Sum.inl) f
+
+def OptTraces.iterated_kleisli_spec
+  : @iterated_kleisli = @iterated
+  := by funext ε τ α β _ _ _ f n; induction n with
+  | zero => rfl
+  | succ n I => simp only [iterated_kleisli, I]; rfl
+
+def OptTraces.iterated_kleisli_back {ε τ α β} 
+  [Mul ε] [One ε] [SMul ε τ]
+  (f: α -> OptTraces ε τ (β ⊕ α))
+  : ℕ -> α -> OptTraces ε τ (β ⊕ α)
+  | 0 => pure ∘ Sum.inr 
+  | n + 1 => f >=> Sum.elim (pure ∘ Sum.inl) (iterated_kleisli_back f n)
+
+def OptTraces.iterated_back {ε τ α β} 
+  [Mul ε] [One ε] [SMul ε τ]
+  (f: α -> OptTraces ε τ (β ⊕ α))
+  : ℕ -> α-> OptTraces ε τ (β ⊕ α)
+  | 0, a => pure (Sum.inr a)
+  | n + 1, a => f a >>= Sum.elim (pure ∘ Sum.inl) (iterated_back f n)
+
+def OptTraces.iterated_kleisli_back_spec'
+  : @iterated_kleisli_back = @iterated_back
+  := by funext ε τ α β _ _ _ f n; induction n with
+  | zero => rfl
+  | succ n I => simp only [iterated_kleisli_back, I]; rfl
+
+def OptTraces.iterated_kleisli_back_spec''
+  {ε τ α β}
+  [m: Monoid ε] [a: MulAction ε τ]
+  : @iterated_kleisli_back ε τ α β m.toMul m.toOne a.toSMul 
+  = @iterated_kleisli ε τ α β m.toMul m.toOne a.toSMul
+  := by funext f n; induction n with
+  | zero => rfl
+  | succ n I => 
+    simp only [iterated_kleisli_back, iterated_kleisli]
+    funext a
+    cases n with
+    | zero => simp [I, iterated_kleisli, Bind.kleisliRight]
+    | succ n => 
+      rw [
+        <-I, iterated_kleisli_back,
+        <-kleisli_assoc
+      ]
+      apply bind_congr
+      intro c
+      cases c with
+      | inl b => simp [Bind.kleisliRight]
+      | inr a => 
+        simp only [Sum.elim_inr, Bind.kleisliRight, iterated_kleisli_back_spec']
+        clear I
+        induction n generalizing a with
+        | zero => 
+          rw [<-iterated_kleisli_back_spec']
+          simp [iterated_kleisli_back]
+        | succ n I => 
+          simp only [iterated_back]
+          rw [bind_assoc]
+          apply congr rfl
+          funext c
+          cases c with
+          | inl b => simp
+          | inr a => simp [I]
+
+def OptTraces.iterated_kleisli_back_spec
+  {ε τ α β}
+  [m: Monoid ε] [a: MulAction ε τ]
+  : @iterated_kleisli_back ε τ α β m.toMul m.toOne a.toSMul 
+  = @iterated ε τ α β m.toMul m.toOne a.toSMul
+  := by rw [
+    iterated_kleisli_back_spec'',
+    iterated_kleisli_spec
+  ]
+
+def OptTraces.iterated_back_spec
+  {ε τ α β}
+  [m: Monoid ε] [a: MulAction ε τ]
+  : @iterated_back ε τ α β m.toMul m.toOne a.toSMul 
+  = @iterated ε τ α β m.toMul m.toOne a.toSMul
+  := by rw [
+    <-iterated_kleisli_back_spec',
+    iterated_kleisli_back_spec
+  ]
 
 def OptTraces.is_trace_step {ε τ α β}
   (f: α -> OptTraces ε τ (β ⊕ α))
@@ -376,7 +467,28 @@ instance {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (
 
 instance {ε τ} [Monoid ε] [MulAction ε τ] [TraceAction ε τ]: ElgotMonad (OptTraces ε τ)
   where
-  fixpoint f := sorry
+  fixpoint f := by
+    funext a
+    apply OptTraces.ext
+    constructor
+    . funext b e
+      apply propext
+      apply Iff.intro
+      . intro ⟨c, e', e'', Hstep, Htail, He⟩
+        cases c with
+        | inl b' => 
+          exact ⟨1, Sum.inr a, e'', e', 
+            ⟨rfl, Htail.2⟩, 
+            Htail.1 ▸ Hstep, 
+            by rw [Htail.2, one_mul, He, Htail.2, mul_one]⟩ 
+        | inr a' => 
+          let ⟨n, Htail⟩ := Htail;  
+          exact ⟨n.succ, Sum.inl b, e'', e', 
+            sorry, 
+            sorry, 
+            sorry⟩
+      . sorry
+    . sorry
   naturality f g := sorry
   codiagonal f := sorry
   uniformity f g h := sorry
