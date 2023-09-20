@@ -74,6 +74,11 @@ def kleisli_pure_comp {m: Type u -> Type v} [Monad m] [LawfulMonad m] {α β γ:
   : (f >=> pure ∘ g) a = (g <$> f a)
   := by simp only [Bind.kleisliRight, <-bind_pure_comp]; rfl
 
+def kleisli_comp_app {m: Type u -> Type v} [Monad m] {α β γ: Type u}
+  (f: α -> m β) (g: β -> m γ) (a: α)
+  : (f >=> g) a = f a >>= g
+  := rfl
+
 def kleisli_pure_comp' {m: Type u -> Type v} [Monad m] [LawfulMonad m] {α β γ: Type u}
   (f: α -> m β) (g: β -> γ)
   : (f >=> pure ∘ g) = (λa => g <$> f a)
@@ -82,6 +87,18 @@ def kleisli_pure_comp' {m: Type u -> Type v} [Monad m] [LawfulMonad m] {α β γ
 def destate_inl_dist_fn {σ: Type u} {m: Type u -> Type v} {α β γ: Type u} [Monad m] [LawfulMonad m]
   (f: α -> StateT σ m β)
   : destate (f >=> pure ∘ @Sum.inl β γ) >=> pure ∘ dist_fn = destate f >=> pure ∘ Sum.inl
+  := by 
+    rw [
+      destate_kleisli, 
+      <-kleisli_assoc,
+    ]
+    apply congr rfl
+    funext ⟨a, s⟩  
+    simp [destate, pure, StateT.pure, Bind.kleisliRight, dist_fn]
+
+def destate_inr_dist_fn {σ: Type u} {m: Type u -> Type v} {α β γ: Type u} [Monad m] [LawfulMonad m]
+  (f: α -> StateT σ m γ)
+  : destate (f >=> pure ∘ @Sum.inr β γ) >=> pure ∘ dist_fn = destate f >=> pure ∘ Sum.inr
   := by 
     rw [
       destate_kleisli, 
@@ -122,8 +139,32 @@ instance stateElgotMonad {σ} {m: Type u -> Type v} [Monad m] [LawfulMonad m] [e
       destate_state_dagger,
       destate_state_dagger,
       destate_state_dagger,
+      <-e.naturality,
+      <-e.codiagonal
     ]
-    sorry
+    apply congr rfl
+    funext ⟨a, s⟩
+    rw [
+      kleisli_pure_comp,
+      <-kleisli_assoc,
+      kleisli_comp_app,
+      kleisli_pure_comp,
+      destate_kleisli,
+      kleisli_comp_app,
+      map_eq_pure_bind,
+      map_eq_pure_bind,
+      bind_assoc,
+      bind_assoc,
+    ]
+    apply congr rfl
+    simp only [pure_bind, Bind.kleisliRight]
+    funext ⟨c, s⟩ 
+    cases c <;> 
+    (try rename _ ⊕ _ => c; cases c) <;> 
+    simp [
+      destate, dist_fn,
+      StateT.pure, pure
+    ]
   uniformity f g h H := by
     apply destate_inj
     rw [destate_kleisli]
