@@ -409,7 +409,7 @@ theorem OptTraces.iterated_sequence_spec {ε τ α β}
     let HI := I n Hv.1.1 (choose Hv.2) (choose_spec Hv.2)
     (choose_spec (choose_spec HI)).2
 
-instance {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (OptTraces ε τ)
+instance OptTraces.instDaggerMonad {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (OptTraces ε τ)
   where
   dagger f a := {
     terminating := OptTraces.iterated_terminating f a,
@@ -422,6 +422,14 @@ theorem OptTraces.dagger_terminating {ε τ α β} [Mul ε] [One ε] [SMul ε τ
   (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
   : (DaggerMonad.dagger f a).terminating = OptTraces.iterated_terminating f a
+  := rfl
+
+theorem OptTraces.dagger_nonterminating {ε τ α β} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]
+  (f: α -> OptTraces ε τ (β ⊕ α))
+  (a: α) (t)
+  : (DaggerMonad.dagger f a).nonterminating t 
+  = (OptTraces.iterated_nonterminating f a t ∨ 
+    OptTraces.infinitely_iterated f a t)
   := rfl
 
 theorem OptTraces.dagger_nonempty {ε τ α β} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ] 
@@ -510,7 +518,29 @@ instance OptTraces.instElgotMonad {ε τ} [Monoid ε] [MulAction ε τ] [TraceAc
           | inr a' => 
             rw [iterated_back_spec] at Hiter
             exact ⟨Sum.inr a', e, e', Hstep, ⟨n, Hiter⟩, He⟩  
-    . sorry
+    . funext t
+      apply propext
+      apply Iff.intro
+      . intro H
+        match H with
+        | Or.inl Hstep => exact Or.inl ⟨1, Or.inr ⟨Sum.inr a, 1, t, ⟨rfl, rfl⟩, Hstep, by simp⟩⟩
+        | Or.inr ⟨Sum.inl b, e, t', Hstep, Hiter, He⟩ => exact Hiter.elim
+        | Or.inr ⟨Sum.inr a', e, t', Hstep, Or.inl ⟨n, Hiter⟩, He⟩ => 
+          exact Or.inl ⟨n.succ, by 
+            rw [<-iterated_back_spec]
+            exact Or.inr ⟨Sum.inr a', e, t', Hstep, 
+              by rw [iterated_back_spec]; exact Hiter, 
+              He⟩
+            ⟩ 
+        | Or.inr ⟨Sum.inr a', e, t', Hstep, Or.inr ⟨as, es, Has, Hes, Hiter⟩, He⟩ => 
+          exact Or.inr ⟨as.cons a, es.cons e, rfl, 
+            by rw [<-TraceAction.fromTrace_assoc, Hes, He], 
+            λ
+            |0 => by
+              simp only [Stream'.cons, Has]
+              exact Hstep
+            |n + 1 => Hiter n⟩
+      . sorry
   naturality f g := sorry
   codiagonal f := sorry
   uniformity f g h := sorry
