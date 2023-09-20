@@ -418,7 +418,7 @@ instance {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (
       OptTraces.infinitely_iterated f a t
   }
 
-theorem dagger_terminating {ε τ α β} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]
+theorem OptTraces.dagger_terminating {ε τ α β} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]
   (f: α -> OptTraces ε τ (β ⊕ α))
   (a: α)
   : (DaggerMonad.dagger f a).terminating = OptTraces.iterated_terminating f a
@@ -471,7 +471,7 @@ instance {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (
     nonempty := OptTraces.dagger_nonempty (λa => (f a).toOptTraces) (λa => (f a).nonempty) a
   }
 
-instance {ε τ} [Monoid ε] [MulAction ε τ] [TraceAction ε τ]: ElgotMonad (OptTraces ε τ)
+instance OptTraces.instElgotMonad {ε τ} [Monoid ε] [MulAction ε τ] [TraceAction ε τ]: ElgotMonad (OptTraces ε τ)
   where
   fixpoint f := by
     funext a
@@ -488,12 +488,28 @@ instance {ε τ} [Monoid ε] [MulAction ε τ] [TraceAction ε τ]: ElgotMonad (
             Htail.1 ▸ Hstep, 
             by rw [Htail.2, one_mul, He, Htail.2, mul_one]⟩ 
         | inr a' => 
-          let ⟨n, Htail⟩ := Htail;  
-          exact ⟨n.succ, Sum.inl b, e'', e', 
-            sorry, 
-            sorry, 
-            sorry⟩
-      . sorry
+          let ⟨n, Htail⟩ := Htail;
+          exists n.succ
+          rw [<-iterated_back_spec, iterated_back]
+          exact ⟨Sum.inr a', e', e'', 
+            Hstep, 
+            by rw [iterated_back_spec]; exact Htail, 
+            He⟩
+      . intro ⟨n, H⟩
+        cases n with
+        | zero => simp [iterated, pure, pure'] at H
+        | succ n => 
+          rw [<-iterated_back_spec] at H
+          let ⟨c, e, e', Hstep, Hiter, He⟩ := H;
+          cases c with
+          | inl b' => 
+            exact ⟨
+              Sum.inl b', e, e', Hstep, 
+              ⟨Sum.inl.inj Hiter.1, Hiter.2⟩, 
+              He⟩  
+          | inr a' => 
+            rw [iterated_back_spec] at Hiter
+            exact ⟨Sum.inr a', e, e', Hstep, ⟨n, Hiter⟩, He⟩  
     . sorry
   naturality f g := sorry
   codiagonal f := sorry
