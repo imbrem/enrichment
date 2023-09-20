@@ -373,3 +373,17 @@ instance {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (
     toOptTraces := DaggerMonad.dagger (λa => (f a).toOptTraces) a,
     nonempty := OptTraces.dagger_nonempty (λa => (f a).toOptTraces) (λa => (f a).nonempty) a
   }
+
+instance {ε τ} [Monoid ε] [MulAction ε τ] [TraceAction ε τ]: ElgotMonad (OptTraces ε τ)
+  where
+  fixpoint f := sorry
+  naturality f g := sorry
+  codiagonal f := sorry
+  uniformity f g h := sorry
+
+instance {ε τ} [Monoid ε] [MulAction ε τ] [TraceAction ε τ]: ElgotMonad (Traces ε τ)
+  where
+  fixpoint := sorry
+  naturality := sorry
+  codiagonal := sorry
+  uniformity := sorry

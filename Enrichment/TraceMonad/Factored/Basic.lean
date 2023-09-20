@@ -33,11 +33,11 @@ theorem OptTraces.injEq' {ε τ α} (t t': OptTraces ε τ α)
   : t.terminating = t'.terminating ∧ t.nonterminating = t'.nonterminating ↔ t = t'
   := by cases t; cases t'; simp
 
-theorem OptTraces.injEq_mp {ε τ α} (t t': OptTraces ε τ α)
+theorem OptTraces.ext {ε τ α} (t t': OptTraces ε τ α)
   : t.terminating = t'.terminating ∧ t.nonterminating = t'.nonterminating -> t = t'
   := (t.injEq' t').mp
 
-theorem Traces.injOpt_mp {ε τ α} (t t': Traces ε τ α)
+theorem Traces.ext {ε τ α} (t t': Traces ε τ α)
   : t.toOptTraces = t'.toOptTraces -> t = t'
   := λH => by 
       cases t; cases t'; 
@@ -49,7 +49,7 @@ theorem Traces.injOpt_mp {ε τ α} (t t': Traces ε τ α)
 theorem Traces.injOpt {ε τ α} (t t': Traces ε τ α)
   : t.toOptTraces = t'.toOptTraces ↔ t = t'
   := ⟨
-    t.injOpt_mp t',
+    t.ext t',
     λH => by rw [H]
   ⟩
 
@@ -93,7 +93,7 @@ theorem OptTraces.map_terminating_id {ε τ α}
 
 theorem Traces.map_terminating_id {ε τ α} (t: Traces α ε τ) 
   : t.map_terminating id = t
-  := Traces.injOpt_mp _ _ t.toOptTraces.map_terminating_id
+  := Traces.ext _ _ t.toOptTraces.map_terminating_id
 
 def OptTraces.map_nonterminating {ε τ α τ'} (f: τ -> τ') (t: OptTraces ε τ α)
   : OptTraces ε τ' α where
@@ -116,7 +116,7 @@ theorem OptTraces.map_nonterminating_id {α ε τ}
 
 theorem Traces.map_nonterminating_id {ε τ α} (t: Traces α ε τ) 
   : t.map_nonterminating id = t
-  := Traces.injOpt_mp _ _ t.toOptTraces.map_nonterminating_id
+  := Traces.ext _ _ t.toOptTraces.map_nonterminating_id
 
 def OptTraces.map' {ε τ α β} (f: α -> β) (x: OptTraces ε τ α): OptTraces ε τ β where
   terminating b e := ∃a, x.terminating a e ∧ b = f a
@@ -186,7 +186,7 @@ instance Traces.instMonad {ε τ} [Mul ε] [One ε] [SMul ε τ]: Monad (Traces 
 instance OptTraces.instLawfulMonad {ε τ} [M: Monoid ε] [A: MulAction ε τ]: LawfulMonad (OptTraces ε τ) :=
   LawfulMonad.mk' (OptTraces ε τ) 
     (λ⟨xt, xl⟩ => by
-      apply OptTraces.injEq_mp
+      apply OptTraces.ext
       constructor
       . funext b e''
         exact propext ⟨
@@ -200,7 +200,7 @@ instance OptTraces.instLawfulMonad {ε τ} [M: Monoid ε] [A: MulAction ε τ]: 
         ⟩ 
     ) 
     (λx f => by
-      apply OptTraces.injEq_mp
+      apply OptTraces.ext
       constructor
       . funext b e''
         exact propext ⟨
@@ -214,7 +214,7 @@ instance OptTraces.instLawfulMonad {ε τ} [M: Monoid ε] [A: MulAction ε τ]: 
         ⟩
     ) 
     (λ⟨xt, xl⟩ f g => by
-      apply OptTraces.injEq_mp
+      apply OptTraces.ext
       constructor
       . funext d e'
         exact propext ⟨
@@ -244,6 +244,6 @@ instance OptTraces.instLawfulMonad {ε τ} [M: Monoid ε] [A: MulAction ε τ]: 
 
 instance Traces.instLawfulMonad {ε τ} [M: Monoid ε] [A: MulAction ε τ]: LawfulMonad (Traces ε τ) :=
   LawfulMonad.mk' (Traces ε τ) 
-    (λ_ => Traces.injOpt_mp _ _ (OptTraces.instLawfulMonad.id_map _)) 
-    (λ_ _ => Traces.injOpt_mp _ _ (OptTraces.instLawfulMonad.pure_bind _ _))
-    (λ_ _ _ => Traces.injOpt_mp _ _ (OptTraces.instLawfulMonad.bind_assoc _ _ _))
+    (λ_ => Traces.ext _ _ (OptTraces.instLawfulMonad.id_map _)) 
+    (λ_ _ => Traces.ext _ _ (OptTraces.instLawfulMonad.pure_bind _ _))
+    (λ_ _ _ => Traces.ext _ _ (OptTraces.instLawfulMonad.bind_assoc _ _ _))
