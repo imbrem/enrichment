@@ -19,6 +19,10 @@ def OptTraces.is_nonempty {ε τ α} (t: OptTraces ε τ α) := (∃a e, t.termi
 class Traces (ε τ α) extends OptTraces ε τ α where
   nonempty: (∃a e, terminating a e) ∨ (∃e, nonterminating e)
 
+def Traces.arrow_toOptTraces {ε τ α β} (f: α -> Traces ε τ β) 
+  (a: α): OptTraces ε τ β
+  := (f a).toOptTraces
+
 def Trace.toOptTraces_is_nonempty {ε τ α}: (t: Trace ε τ α) -> t.toOptTraces.is_nonempty
   | terminating a e => Or.inl ⟨a, e, rfl, rfl⟩ 
   | nonterminating t => Or.inr ⟨t, rfl⟩
@@ -44,6 +48,15 @@ theorem Traces.ext {ε τ α} (t t': Traces ε τ α)
       let ⟨_, _⟩ := (OptTraces.injEq' _ _).mpr H; 
       simp only at *; 
       simp [*]
+
+def Traces.arrow_ext {ε τ α β} (f g: α -> Traces ε τ β) 
+  (H: arrow_toOptTraces f = arrow_toOptTraces g): f = g
+  := by
+    have H': ∀a, arrow_toOptTraces f a = arrow_toOptTraces g a
+      := by simp [H];
+    funext a
+    apply Traces.ext
+    exact H' a
 
 --TODO: there must be a better way...
 theorem Traces.injOpt {ε τ α} (t t': Traces ε τ α)
@@ -247,3 +260,16 @@ instance Traces.instLawfulMonad {ε τ} [M: Monoid ε] [A: MulAction ε τ]: Law
     (λ_ => Traces.ext _ _ (OptTraces.instLawfulMonad.id_map _)) 
     (λ_ _ => Traces.ext _ _ (OptTraces.instLawfulMonad.pure_bind _ _))
     (λ_ _ _ => Traces.ext _ _ (OptTraces.instLawfulMonad.bind_assoc _ _ _))
+
+theorem Traces.toOptTraces_bind {ε τ α β}
+  [Monoid ε] [MulAction ε τ]
+  (x: Traces ε τ α) (f: α -> Traces ε τ β)
+  : (x >>= f).toOptTraces = x.toOptTraces >>= (arrow_toOptTraces f)
+  := rfl
+
+theorem Traces.arrow_kleisli {ε τ α β γ}
+  [Monoid ε] [MulAction ε τ]
+  (f: α -> Traces ε τ β) (g: β -> Traces ε τ γ)
+  : arrow_toOptTraces (f >=> g) 
+  = (arrow_toOptTraces f) >=> (arrow_toOptTraces g)
+  := rfl

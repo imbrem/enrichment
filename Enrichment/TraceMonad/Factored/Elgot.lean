@@ -555,13 +555,23 @@ instance OptTraces.instElgotMonad {ε τ} [Monoid ε] [MulAction ε τ] [TraceAc
             Or.inr ⟨as.tail, es.tail, rfl, rfl, λn => Hiter n.succ⟩,
             by rw [<-TraceAction.fromTrace_assoc, Hes]
           ⟩ 
-  naturality f g := sorry
+  naturality f g := by
+    funext a
+    apply OptTraces.ext
+    constructor
+    . sorry
+    . sorry
   codiagonal f := sorry
   uniformity f g h := sorry
 
 instance {ε τ} [Monoid ε] [MulAction ε τ] [TraceAction ε τ]: ElgotMonad (Traces ε τ)
   where
-  fixpoint := sorry
+  fixpoint f := by
+    apply Traces.arrow_ext
+    rw [
+      Traces.arrow_kleisli
+    ]
+    sorry
   naturality := sorry
   codiagonal := sorry
   uniformity := sorry
