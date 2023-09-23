@@ -20,3 +20,7 @@ import Enrichment.TraceMonad.Factored.Basic
 import Enrichment.TraceMonad.Factored.Elgot
 import Enrichment.TraceMonad.Lower.Basic
 import Enrichment.TraceMonad.Split.Basic
+import Enrichment.Pom.Basic
+import Enrichment.Pom.Iso
+import Enrichment.Pom.SubPom
+import Enrichment.Pom.Equiv
