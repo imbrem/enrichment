@@ -2,6 +2,7 @@ import Mathlib.Data.Sum.Basic
 
 class DaggerMonad (m: Type u -> Type v): Type (max (u + 1) v) where
   dagger: ∀{α β: Type u}, (α -> m (β ⊕ α)) -> α -> m β
+  diverge (α: Type u) [Monad m]: m α := dagger (pure ∘ Sum.inr) PUnit.unit
 
 class ElgotMonad (m: Type u -> Type v) [Monad m] [LawfulMonad m] extends DaggerMonad m
   where

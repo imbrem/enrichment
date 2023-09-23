@@ -1,7 +1,7 @@
 import Enrichment.TraceMonad.Factored.Basic
 import Enrichment.TraceMonad.TraceAction
 import Enrichment.Elgot.Monad
-import Enrichment.Elgot.State
+import Enrichment.Utils.Monad
 import Mathlib.Data.Stream.Defs
 open Classical
 
@@ -472,7 +472,7 @@ theorem OptTraces.dagger_nonempty {ε τ α β} [Mul ε] [One ε] [SMul ε τ] [
       ;
     Or.inr ⟨_, Or.inr (OptTraces.iterated_sequence_spec f a I).to_infinitely_iterated⟩
 
-instance {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (Traces ε τ)
+instance Traces.instDaggerMonad {ε τ} [Mul ε] [One ε] [SMul ε τ] [FromTrace ε τ]: DaggerMonad (Traces ε τ)
   where
   dagger f a := {
     toOptTraces := DaggerMonad.dagger (λa => (f a).toOptTraces) a,
@@ -564,7 +564,7 @@ instance OptTraces.instElgotMonad {ε τ} [Monoid ε] [MulAction ε τ] [TraceAc
   codiagonal f := sorry
   uniformity f g h := sorry
 
-instance {ε τ} [Monoid ε] [MulAction ε τ] [TraceAction ε τ]: ElgotMonad (Traces ε τ)
+instance Traces.instElgotMonad {ε τ} [Monoid ε] [MulAction ε τ] [TraceAction ε τ]: ElgotMonad (Traces ε τ)
   where
   fixpoint f := by
     apply Traces.arrow_ext

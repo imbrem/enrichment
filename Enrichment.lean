@@ -19,3 +19,4 @@ import Enrichment.TraceMonad.TraceAction
 import Enrichment.TraceMonad.Factored.Basic
 import Enrichment.TraceMonad.Factored.Elgot
 import Enrichment.TraceMonad.Lower.Basic
+import Enrichment.TraceMonad.Split.Basic
