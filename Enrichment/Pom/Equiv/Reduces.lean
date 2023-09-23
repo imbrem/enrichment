@@ -12,7 +12,7 @@ def Pom.tick (L: Type) [Ticked L]: Pom L := {
   action := λ_ => Ticked.δ
 }
 
-structure SubPomReduces {L} [Ticked L] {α: Pom L} (ρ σ: SubPom α): Prop :=
+structure SubPomReduces {L} [Ticked L] {α: Pom L} (ρ σ: SubPom α): Prop where
   subset: σ.contains ⊆ ρ.contains
   infinite_or_tick: ∀p: ρ.contains,
     σ.contains p ∨
@@ -22,6 +22,10 @@ structure SubPomReduces {L} [Ticked L] {α: Pom L} (ρ σ: SubPom α): Prop :=
     Infinite (ρ.pred ⟨p.val, subset p.property⟩) -> Infinite (σ.pred p)
   infinite_shared: Infinite ρ -> Infinite σ
   empty_shared: IsEmpty σ -> IsEmpty ρ  
+
+-- structure FSubPomReduces {L} [Ticked L] {α: Pom L} (ρ σ: FSubPom α): Prop where
+--   subset: σ.contains ⊆ ρ.contains
+--   empty_shared: IsEmpty σ -> IsEmpty ρ  
 
 theorem SubPomReduces.infinite_iff {L} [Ticked L] {α: Pom L} {ρ σ: SubPom α}
   (S: SubPomReduces ρ σ)
@@ -43,7 +47,7 @@ theorem SubPomReduces.pred_infinite_iff {L} [Ticked L] {α: Pom L}
       λ⟨_, _, _⟩ ⟨_, _, _⟩ H => by cases H; rfl
   ⟩
 
-def SubPomReduces.pred_infinite_iff' {L} [Ticked L] {α: Pom L} 
+theorem SubPomReduces.pred_infinite_iff' {L} [Ticked L] {α: Pom L} 
   {ρ σ: SubPom α} (S: SubPomReduces ρ σ) (p: σ.carrier)
   : Infinite (ρ.toPom.pred ⟨p.val, S.subset p.property⟩) 
   ↔ Infinite (σ.toPom.pred p)
@@ -52,7 +56,7 @@ def SubPomReduces.pred_infinite_iff' {L} [Ticked L] {α: Pom L}
     rw [(SubPom.pred_iso _ _).infinite_iff]
     exact S.pred_infinite_iff p
 
-def SubPomReduces.empty_iff {L} [Ticked L] {α: Pom L} {ρ σ: SubPom α}
+theorem SubPomReduces.empty_iff {L} [Ticked L] {α: Pom L} {ρ σ: SubPom α}
   (S: SubPomReduces ρ σ)
   : IsEmpty ρ ↔ IsEmpty σ
   := ⟨
@@ -121,7 +125,7 @@ theorem SubPomReduces.antisymm {L} [Ticked L]
   {α: Pom L} {ρ σ: SubPom α}
   (H: SubPomReduces ρ σ) (H': SubPomReduces σ ρ)
   : ρ = σ
-  := SubPom.contains_eq (subset_antisymm H'.subset H.subset)
+  := SubPom.ext (subset_antisymm H'.subset H.subset)
 
 structure PomReduct {L} [Ticked L] (α: Pom L) :=
   shared: SubPom α

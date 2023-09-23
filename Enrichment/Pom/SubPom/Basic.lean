@@ -1,8 +1,21 @@
+import Mathlib.Data.Set.Finite
+
 import Enrichment.Pom.Basic
 import Enrichment.Pom.Iso
 
-structure SubPom {L} (P: Pom L): Type := 
-  contains: Set P.carrier
+structure SubPom {L} (α: Pom L): Type where
+  contains: Set α
+  
+theorem SubPom.ext {L} {α: Pom L} {ρ σ: SubPom α} (H: ρ.contains = σ.contains): ρ = σ
+  := by rw [SubPom.mk.injEq]; exact H
+  
+structure FSubPom {L} (α: Pom L) extends SubPom α where
+  finite: Finite contains
+
+theorem FSubPom.ext {L} {α: Pom L} {ρ σ: FSubPom α} (H: ρ.toSubPom = σ.toSubPom): ρ = σ
+  := by rw [FSubPom.mk.injEq]; exact H
+theorem FSubPom.ext' {L} {α: Pom L} {ρ σ: FSubPom α} (H: ρ.contains = σ.contains): ρ = σ
+  := FSubPom.ext (SubPom.ext H)
 
 def SubPom.univ {L} (α: Pom L): SubPom α := ⟨ Set.univ ⟩
 def SubPom.empty {L} (α: Pom L): SubPom α := ⟨ ∅ ⟩ 
@@ -15,29 +28,62 @@ def SubPom.complement {L} {α: Pom L} (ρ: SubPom α): SubPom α
 def SubPom.deletion {L} {α: Pom L} (ρ σ: SubPom α): SubPom α
   := ⟨ ρ.contains ∩ σ.containsᶜ ⟩  
 
-def SubPom.inter_comm {L} {α: Pom L} (ρ σ: SubPom α)
+def FSubPom.univ {L} (α: FPom L): FSubPom α.toPom 
+  := ⟨ SubPom.univ α, @Subtype.finite _ α.finite _ ⟩ 
+def FSubPom.empty {L} (α: Pom L): FSubPom α
+  := ⟨ SubPom.empty α, @Finite.intro _ 0 ⟨λ., λ., λ., λ.⟩ ⟩ 
+def FSubPom.union {L} {α: Pom L} (ρ σ: FSubPom α): FSubPom α :=
+  ⟨ ρ.toSubPom.union σ.toSubPom, 
+    @Finite.Set.finite_union _ ρ.contains σ.contains ρ.finite σ.finite ⟩  
+def FSubPom.inter_left {L} {α: Pom L} (ρ: FSubPom α) (σ: SubPom α): FSubPom α :=
+  ⟨ ρ.toSubPom.inter σ, 
+    @Finite.Set.finite_inter_of_left _ ρ.contains σ.contains ρ.finite ⟩ 
+def FSubPom.inter_right {L} {α: Pom L} (ρ: SubPom α) (σ: FSubPom α): FSubPom α :=
+  ⟨ ρ.inter σ.toSubPom, 
+    @Finite.Set.finite_inter_of_right _ ρ.contains σ.contains σ.finite ⟩ 
+def FSubPom.inter {L} {α: Pom L} (ρ σ: FSubPom α): FSubPom α :=
+  ⟨ ρ.toSubPom.inter σ.toSubPom, 
+    @Finite.Set.finite_inter_of_left _ ρ.contains σ.contains ρ.finite ⟩  
+
+theorem SubPom.inter_comm {L} {α: Pom L} (ρ σ: SubPom α)
   : ρ.inter σ = σ.inter ρ
   := by simp [inter, Set.inter_comm]
-
-def SubPom.inter_assoc {L} {α: Pom L} (ρ σ τ: SubPom α)
+theorem SubPom.inter_assoc {L} {α: Pom L} (ρ σ τ: SubPom α)
   : (ρ.inter σ).inter τ = ρ.inter (σ.inter τ)
   := by simp [inter, Set.inter_assoc]
-
-def SubPom.union_comm {L} {α: Pom L} (ρ σ: SubPom α)
-  : ρ.union σ = σ.union ρ
-  := by simp [union, Set.union_comm]
-
-def SubPom.inter_univ {L} {α: Pom L} (ρ: SubPom α)
+theorem SubPom.inter_idem {L} {α: Pom L} (ρ: SubPom α)
+  : ρ.inter ρ = ρ
+  := by simp [inter]
+theorem SubPom.inter_univ {L} {α: Pom L} (ρ: SubPom α)
   : ρ.inter (univ α) = ρ
   := by simp [inter, univ]
-
-def SubPom.univ_inter {L} {α: Pom L} (ρ: SubPom α)
+theorem SubPom.univ_inter {L} {α: Pom L} (ρ: SubPom α)
   : (univ α).inter ρ = ρ
   := by simp [inter, univ]
 
-def SubPom.inter_self {L} {α: Pom L} (ρ: SubPom α)
+theorem FSubPom.inter_comm {L} {α: Pom L} (ρ σ: FSubPom α)
+  : ρ.inter σ = σ.inter ρ
+  := FSubPom.ext (SubPom.inter_comm ρ.toSubPom σ.toSubPom)
+theorem FSubPom.inter_assoc {L} {α: Pom L} (ρ σ τ: FSubPom α)
+  : (ρ.inter σ).inter τ = ρ.inter (σ.inter τ)
+  := FSubPom.ext (SubPom.inter_assoc ρ.toSubPom σ.toSubPom τ.toSubPom)
+theorem FSubPom.inter_idem {L} {α: Pom L} (ρ: FSubPom α)
   : ρ.inter ρ = ρ
-  := by simp [inter]
+  := FSubPom.ext (SubPom.inter_idem ρ.toSubPom)
+theorem FSubPom.inter_univ {L} {α: Pom L} (ρ: FSubPom α)
+  : ρ.inter_left (SubPom.univ α) = ρ
+  := FSubPom.ext (SubPom.inter_univ ρ.toSubPom)
+theorem FSubPom.univ_inter {L} {α: Pom L} (ρ: FSubPom α)
+  : FSubPom.inter_right (SubPom.univ α) ρ = ρ
+  := FSubPom.ext (SubPom.univ_inter ρ.toSubPom)
+
+theorem SubPom.union_comm {L} {α: Pom L} (ρ σ: SubPom α)
+  : ρ.union σ = σ.union ρ
+  := by simp [union, Set.union_comm]
+
+theorem FSubPom.union_comm {L} {α: Pom L} (ρ σ: FSubPom α)
+  : ρ.union σ = σ.union ρ
+  := FSubPom.ext (SubPom.union_comm ρ.toSubPom σ.toSubPom)
 
 def SubPom.seq {L} {A B: Pom L} (SA: SubPom A) (SB: SubPom B)
   : SubPom (A.seq B)
@@ -47,33 +93,38 @@ def SubPom.par {L} {A B: Pom L} (SA: SubPom A) (SB: SubPom B)
   : SubPom (A.par B)
   := ⟨ Sum.elim SA.contains SB.contains ⟩
 
-def SubPom.carrier {L} {P: Pom L} (S: SubPom P): Type
-  := ↑S.contains
+def SubPom.carrier {L} {α: Pom L} (σ: SubPom α): Type
+  := ↑σ.contains
+def SubPom.order {L} {α: Pom L} (σ: SubPom α): PartialOrder σ.carrier
+  := @Subtype.partialOrder α.carrier α.order σ.contains
+def SubPom.action {L} {α: Pom L} (σ: SubPom α) (p: σ.carrier): L
+  := α.action p.val
+def SubPom.toPom {L} {α: Pom L} (σ: SubPom α): Pom L where
+  carrier := σ.carrier
+  order := σ.order
+  action := σ.action
 
-def SubPom.order {L} {P: Pom L} (S: SubPom P): PartialOrder S.carrier
-  := @Subtype.partialOrder P.carrier P.order S.contains
+def FSubPom.carrier {L} {α: Pom L} (σ: FSubPom α): Type
+  := σ.toSubPom.carrier
+def FSubPom.order {L} {α: Pom L} (σ: FSubPom α): PartialOrder σ.carrier
+  := σ.toSubPom.order
+def FSubPom.action {L} {α: Pom L} (σ: FSubPom α): σ.carrier -> L
+  := σ.toSubPom.action
+def FSubPom.toPom {L} {α: Pom L} (σ: FSubPom α): Pom L
+  := σ.toSubPom.toPom
 
-def SubPom.action {L} {P: Pom L} (S: SubPom P) (p: S.carrier): L
-  := P.action p.val
-
-def SubPom.toPom {L} {P: Pom L} (S: SubPom P): Pom L := {
-  carrier := S.carrier,
-  order := S.order,
-  action := S.action
-}
-
-theorem SubPom.contains_eq {L} {α: Pom L} {ρ σ: SubPom α} 
-  (H: ρ.contains = σ.contains)
-  : ρ = σ
-  := by cases ρ; cases σ; cases H; rfl
-
-instance {L} {α: Pom L}: CoeOut (SubPom α) (Pom L) := {
+instance {L} {α: Pom L}: CoeOut (SubPom α) (Pom L) where
   coe := SubPom.toPom
-}
-
-instance {L} {α: Pom L}: CoeOut (SubPom α) (Type) := {
+instance {L} {α: Pom L}: CoeOut (SubPom α) (Type) where
   coe := SubPom.carrier
-}
+
+
+instance {L} {α: Pom L}: Coe (FSubPom α) (SubPom α) where
+  coe := FSubPom.toSubPom
+instance {L} {α: Pom L}: CoeOut (FSubPom α) (Pom L) where
+  coe := FSubPom.toPom
+instance {L} {α: Pom L}: CoeOut (FSubPom α) (Type) where
+  coe := FSubPom.carrier
 
 def Pom.pred {L} (α: Pom L) (p: α.carrier): SubPom α
   := ⟨ λ x => α.order.le x p ⟩
