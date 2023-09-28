@@ -33,6 +33,7 @@ def BinoidalCategory.leftTensorHom {C: Type u} [Category C] [TensorProduct C] [B
   {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) 
   : (tensorObj X₁ X₂ ⟶ tensorObj Y₁ Y₂) := whiskerRight f _ ≫ whiskerLeft _ g
 
+
   /-- right tensor product `f ⋉ g` -/
 def BinoidalCategory.rightTensorHom {C: Type u} [Category C] [TensorProduct C] [BinoidalCategory C]
   {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) 
@@ -56,8 +57,18 @@ scoped infixl:81 " ▷ " => whiskerRight
 /-- Notation for the `leftTensorHom` operator of binoidal categories -/
 scoped infixr:81 " ⋉ " => leftTensorHom
 
+def BinoidalCategory.leftTensorHom_def {C: Type u} 
+  [Category C] [TensorProduct C] [BinoidalCategory C]
+  {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) 
+  : f ⋉ g = whiskerRight f _ ≫ whiskerLeft _ g := rfl
+
 /-- Notation for the `rightTensorHom` operator of binoidal categories -/
 scoped infixl:81 " ⋊ " => rightTensorHom
+
+def BinoidalCategory.rightTensorHom_def {C: Type u} 
+  [Category C] [TensorProduct C] [BinoidalCategory C]
+  {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g: X₂ ⟶ Y₂) 
+  : f ⋊ g = whiskerLeft _ g ≫ whiskerRight f _ := rfl
 
 instance TensorProduct.fromMonoidalCategory (C: Type u) [Category C] [MonoidalCategory C]: TensorProduct C := {
   tensorObj := MonoidalCategory.tensorObj
