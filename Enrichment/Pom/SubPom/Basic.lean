@@ -8,6 +8,22 @@ structure SubPom {L} (α: Pom L): Type where
   
 theorem SubPom.ext {L} {α: Pom L} {ρ σ: SubPom α} (H: ρ.contains = σ.contains): ρ = σ
   := by rw [SubPom.mk.injEq]; exact H
+
+def SubPom.carrier {L} {α: Pom L} (σ: SubPom α): Type
+  := ↑σ.contains
+def SubPom.order {L} {α: Pom L} (σ: SubPom α): PartialOrder σ.carrier
+  := @Subtype.partialOrder α.carrier α.order σ.contains
+def SubPom.action {L} {α: Pom L} (σ: SubPom α) (p: σ.carrier): L
+  := α.action p.val
+def SubPom.toPom {L} {α: Pom L} (σ: SubPom α): Pom L where
+  carrier := σ.carrier
+  order := σ.order
+  action := σ.action
+
+instance {L} {α: Pom L}: CoeOut (SubPom α) (Pom L) where
+  coe := SubPom.toPom
+instance {L} {α: Pom L}: CoeOut (SubPom α) (Type) where
+  coe := SubPom.carrier
   
 structure FSubPom {L} (α: Pom L) extends SubPom α where
   finite: Finite contains
@@ -16,6 +32,22 @@ theorem FSubPom.ext {L} {α: Pom L} {ρ σ: FSubPom α} (H: ρ.toSubPom = σ.toS
   := by rw [FSubPom.mk.injEq]; exact H
 theorem FSubPom.ext' {L} {α: Pom L} {ρ σ: FSubPom α} (H: ρ.contains = σ.contains): ρ = σ
   := FSubPom.ext (SubPom.ext H)
+
+def FSubPom.carrier {L} {α: Pom L} (σ: FSubPom α): Type
+  := σ.toSubPom.carrier
+def FSubPom.order {L} {α: Pom L} (σ: FSubPom α): PartialOrder σ.carrier
+  := σ.toSubPom.order
+def FSubPom.action {L} {α: Pom L} (σ: FSubPom α): σ.carrier -> L
+  := σ.toSubPom.action
+def FSubPom.toPom {L} {α: Pom L} (σ: FSubPom α): Pom L
+  := σ.toSubPom.toPom
+
+instance {L} {α: Pom L}: Coe (FSubPom α) (SubPom α) where
+  coe := FSubPom.toSubPom
+instance {L} {α: Pom L}: CoeOut (FSubPom α) (Pom L) where
+  coe := FSubPom.toPom
+instance {L} {α: Pom L}: CoeOut (FSubPom α) (Type) where
+  coe := FSubPom.carrier
 
 def SubPom.univ {L} (α: Pom L): SubPom α := ⟨ Set.univ ⟩
 def SubPom.empty {L} (α: Pom L): SubPom α := ⟨ ∅ ⟩ 
@@ -92,39 +124,6 @@ def SubPom.seq {L} {A B: Pom L} (SA: SubPom A) (SB: SubPom B)
 def SubPom.par {L} {A B: Pom L} (SA: SubPom A) (SB: SubPom B)
   : SubPom (A.par B)
   := ⟨ Sum.elim SA.contains SB.contains ⟩
-
-def SubPom.carrier {L} {α: Pom L} (σ: SubPom α): Type
-  := ↑σ.contains
-def SubPom.order {L} {α: Pom L} (σ: SubPom α): PartialOrder σ.carrier
-  := @Subtype.partialOrder α.carrier α.order σ.contains
-def SubPom.action {L} {α: Pom L} (σ: SubPom α) (p: σ.carrier): L
-  := α.action p.val
-def SubPom.toPom {L} {α: Pom L} (σ: SubPom α): Pom L where
-  carrier := σ.carrier
-  order := σ.order
-  action := σ.action
-
-def FSubPom.carrier {L} {α: Pom L} (σ: FSubPom α): Type
-  := σ.toSubPom.carrier
-def FSubPom.order {L} {α: Pom L} (σ: FSubPom α): PartialOrder σ.carrier
-  := σ.toSubPom.order
-def FSubPom.action {L} {α: Pom L} (σ: FSubPom α): σ.carrier -> L
-  := σ.toSubPom.action
-def FSubPom.toPom {L} {α: Pom L} (σ: FSubPom α): Pom L
-  := σ.toSubPom.toPom
-
-instance {L} {α: Pom L}: CoeOut (SubPom α) (Pom L) where
-  coe := SubPom.toPom
-instance {L} {α: Pom L}: CoeOut (SubPom α) (Type) where
-  coe := SubPom.carrier
-
-
-instance {L} {α: Pom L}: Coe (FSubPom α) (SubPom α) where
-  coe := FSubPom.toSubPom
-instance {L} {α: Pom L}: CoeOut (FSubPom α) (Pom L) where
-  coe := FSubPom.toPom
-instance {L} {α: Pom L}: CoeOut (FSubPom α) (Type) where
-  coe := FSubPom.carrier
 
 def Pom.pred {L} (α: Pom L) (p: α.carrier): SubPom α
   := ⟨ λ x => α.order.le x p ⟩

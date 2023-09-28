@@ -23,9 +23,11 @@ structure SubPomReduces {L} [Ticked L] {α: Pom L} (ρ σ: SubPom α): Prop wher
   infinite_shared: Infinite ρ -> Infinite σ
   empty_shared: IsEmpty σ -> IsEmpty ρ  
 
--- structure FSubPomReduces {L} [Ticked L] {α: Pom L} (ρ σ: FSubPom α): Prop where
---   subset: σ.contains ⊆ ρ.contains
---   empty_shared: IsEmpty σ -> IsEmpty ρ  
+structure FSubPomReduces {L} [Ticked L] {α: Pom L} (ρ σ: FSubPom α): Prop where
+  subset: σ.contains ⊆ ρ.contains
+  tick: ∀p: ρ.contains,
+    σ.contains p ∨ α.action p = Ticked.δ
+  empty_shared: IsEmpty σ -> IsEmpty ρ
 
 theorem SubPomReduces.infinite_iff {L} [Ticked L] {α: Pom L} {ρ σ: SubPom α}
   (S: SubPomReduces ρ σ)

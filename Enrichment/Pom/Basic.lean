@@ -17,6 +17,12 @@ structure FPom (L: Type) extends Pom L where
 instance {L}: Coe (FPom L) (Pom L) where
   coe := FPom.toPom
 
+instance {L}: CoeOut (FPom L) (Type) where
+  coe a := a.carrier
+
+instance FPom.instFinite {L: Type} {α: FPom L}: Finite α
+  := α.finite
+
 abbrev FPom.mk' {L: Type} (α: Type) 
   [H: Finite α] (order: PartialOrder α) (action: α -> L): FPom L where
   carrier := α
@@ -24,7 +30,7 @@ abbrev FPom.mk' {L: Type} (α: Type)
   action := action
   finite := H
 
-abbrev Pom.toFPom {L: Type} (α: Pom L) [H: Finite α.carrier]: FPom L where
+abbrev Pom.toFPom {L: Type} (α: Pom L) [H: Finite α]: FPom L where
   toPom := α
   finite := H
 
@@ -38,9 +44,10 @@ def Pom.empty (L: Type): Pom L where
   }
   action e := match e with.
 
-def FPom.empty (L: Type): FPom L where
-  toPom := Pom.empty L
-  finite := @Finite.intro Empty 0 ⟨λ., λ., λ., λ.⟩
+instance Pom.instEmptyFinite {L: Type}: Finite (empty L)
+  := @Finite.intro Empty 0 ⟨λ., λ., λ., λ.⟩
+
+def FPom.empty (L: Type): FPom L := (Pom.empty L).toFPom
 
 def PomFamily (N: Type) (L) := N -> Pom L
 def PomFamily.mk {L} {N}: (N -> Pom L) -> PomFamily N L := id
@@ -63,9 +70,11 @@ def Pom.seq {L} (α β: Pom L): Pom L where
   order := @Sum.Lex.partialOrder _ _ α.order β.order
   action := Sum.elim α.action β.action
 
-def FPom.seq {L} (α β: FPom L): FPom L where
-  toPom := α.toPom.seq β.toPom
-  finite := @Finite.instFiniteSum α.carrier β.carrier α.finite β.finite
+instance Pom.finiteSeq {L: Type} {α β: Pom L} [Finite α] [Finite β]
+  : Finite (α.seq β)
+  := Finite.instFiniteSum
+
+def FPom.seq {L} (α β: FPom L): FPom L := (α.toPom.seq β.toPom).toFPom
 
 def Pom.par_order {L} (α β: Pom L)
   : PartialOrder (α.carrier ⊕ β.carrier)
@@ -100,6 +109,8 @@ def Pom.par {L} (α β: Pom L): Pom L where
   order := α.par_order β
   action := Sum.elim α.action β.action
 
-def FPom.par {L} (α β: FPom L): FPom L where
-  toPom := α.toPom.par β.toPom
-  finite := @Finite.instFiniteSum α.carrier β.carrier α.finite β.finite
+instance Pom.instFinitePar {L: Type} {α β: Pom L} [Finite α] [Finite β]
+  : Finite (α.par β)
+  := Finite.instFiniteSum
+
+def FPom.par {L} (α β: FPom L): FPom L := (α.toPom.par β.toPom).toFPom
