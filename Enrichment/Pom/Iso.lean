@@ -128,6 +128,10 @@ def PomIso.seq2 {L} (α: Fin 2 -> Pom L)
       match a with | ⟨0, a⟩ => rfl | ⟨1, a⟩ => rfl
   }
 
+def PomIso.seq2' {L α β} (γ: Fin 2 -> Pom L) (Hα: PomIso (γ 0) α) (Hβ: PomIso (γ 1) β)
+  : PomIso (Pom.sigma γ) (α.seq β) :=
+  PomIso.trans (PomIso.seq2 γ) (PomIso.seq Hα Hβ)
+
 def PomIso.par_ord {L} {N M} [PartialOrder N] [PartialOrder M] (α: N ⊕ M -> Pom L)
   : PomIso (Pom.sigma α) ((Pom.sigma (α ∘ Sum.inl)).par (Pom.sigma (α ∘ Sum.inr)))
   := sorry

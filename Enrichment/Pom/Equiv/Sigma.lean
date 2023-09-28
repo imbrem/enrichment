@@ -55,14 +55,18 @@ def PomEquiv.seq
   (Eα: PomEquiv α α')
   {β β': Pom L}
   (Eβ: PomEquiv β β')
-  : PomEquiv (α.seq β) (α'.seq β')
-  := {
-    shared := Eα.shared.seq Eβ.shared,
-    reduce_left := sorry,
-    reduce_right := sorry,
-    iso_left := sorry,
-    iso_right := sorry
-  }
+  : PomEquiv (α.seq β) (α'.seq β') where
+  shared := Pom.sigma (λe: Fin 2 => match e with | 0 => Eα.shared | 1 => Eβ.shared)
+  reduce_left := PomReduct.sigma 
+    (λe: Fin 2 => match e with | 0 => Eα.reduce_left | 1 => Eβ.reduce_left)
+  reduce_right := PomReduct.sigma 
+    (λe: Fin 2 => match e with | 0 => Eα.reduce_right | 1 => Eβ.reduce_right)
+  iso_left := PomIso.trans 
+    (PomReduct.sigma_iso _)
+    (PomIso.seq2' _ Eα.iso_left Eβ.iso_left)
+  iso_right := PomIso.trans 
+    (PomReduct.sigma_iso _)
+    (PomIso.seq2' _ Eα.iso_right Eβ.iso_right)
 
 def PomEquiv.par
   {L} [Ticked L]
@@ -70,11 +74,9 @@ def PomEquiv.par
   (Eα: PomEquiv α α')
   {β β': Pom L}
   (Eβ: PomEquiv β β')
-  : PomEquiv (α.par β) (α'.par β')
-  := {
-    shared := Eα.shared.par Eβ.shared,
-    reduce_left := sorry,
-    reduce_right := sorry,
-    iso_left := sorry,
-    iso_right := sorry
-  }
+  : PomEquiv (α.par β) (α'.par β') where
+  shared := Eα.shared.par Eβ.shared
+  reduce_left := sorry
+  reduce_right := sorry
+  iso_left := sorry
+  iso_right := sorry

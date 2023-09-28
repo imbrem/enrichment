@@ -203,3 +203,26 @@ def PomReduct.sigma
     shared := SubPom.sigma (λn => (P n).shared),
     is_reduct := PomReduces.sigma _ (λn => (P n).is_reduct)
   }
+
+def PomReduct.sigma_iso {L} [Ticked L] {N} [PartialOrder N]
+  {F: N -> Pom L} (SF: (n: N) -> PomReduct (F n))
+  : PomIso (PomReduct.sigma SF).shared.toPom (Pom.sigma (λn => (SF n).shared.toPom))
+  := {
+    toFun := λ⟨⟨n, e⟩, H⟩ => ⟨n, e, H⟩,
+    invFun := λ⟨n, e, H⟩ => ⟨⟨n, e⟩, H⟩,
+    left_inv := λ⟨⟨_, _⟩, _⟩ => rfl,
+    right_inv := λ⟨_, _, _⟩ => rfl,
+    map_rel_iff' := λ{A B} => match A, B with 
+      | ⟨⟨_, _⟩, _⟩, ⟨⟨_, _⟩, _⟩ => ⟨ 
+        λH => by
+          cases H with
+          | left x y Hi => exact Sigma.Lex.left _ _ Hi
+          | right x y Hx => exact Sigma.Lex.right _ _ Hx 
+        ,
+        λH => by
+          cases H with
+          | left x y Hi => exact Sigma.Lex.left _ _ Hi
+          | right x y Hx => exact Sigma.Lex.right _ _ Hx 
+      ⟩,
+    action_eq := rfl
+  }
